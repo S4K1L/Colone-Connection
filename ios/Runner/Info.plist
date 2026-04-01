@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location to show nearby colonies on the map.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location to optimize route planning.</string>
+	<key>GOOGLE_MAPS_API_KEY</key>
+	<string>AIzaSyDltI2vV-mbS5Qy-gz2lPMTf7RAbR4tZRs</string>
 </dict>
 </plist>

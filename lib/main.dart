@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/theme/dark_theme.dart';
 import 'package:flutter_extension/theme/light_theme.dart';
 import 'package:flutter_extension/util/app_constants.dart';
@@ -14,6 +15,7 @@ import 'helper/get_di.dart' as di;
 import 'helper/route_helper.dart';
 void main()async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   Map<String, Map<String, String>> _languages = await di.init();
   runApp( MyApp(languages:_languages,));
 }
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget {
   return  GetBuilder<ThemeController>(builder: (themeController) {
       return GetBuilder<LocalizationController>(builder: (localizeController) {
         return ScreenUtilInit(
-            designSize: const Size(393, 852),
+            designSize: const Size(430, 932),
             minTextAdapt: true,
             splitScreenMode: true,
             builder: (_ , child) {

@@ -18,6 +18,9 @@ dependencies:
   flutter_spinkit:
   cached_network_image:
   shimmer: 
+  google_fonts:
+  google_maps_flutter:
+  flutter_dotenv:
 
 
 
@@ -29,8 +32,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/language/
     - assets/images/
+    - assets/icons/
 
   # fonts:
   #   - family: Schyler
