@@ -4,9 +4,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/data/model/map_point_model.dart';
+import 'package:flutter_extension/data/model/map_search_models.dart';
 import 'package:flutter_extension/util/app_colors.dart';
+import 'package:flutter_extension/views/base/search_filter_chips_row.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
+
+enum MapSearchFilterKind { all, colonies, customers }
 
 class HomeController extends GetxController {
   static const LatLng center = LatLng(23.7808, 90.2792);
@@ -52,10 +56,166 @@ class HomeController extends GetxController {
   BitmapDescriptor? _redMarkerIcon;
   MapPointModel? selectedPoint;
   bool isSearchOpen = false;
+  MapSearchFilterKind searchFilter = MapSearchFilterKind.all;
+
+  static const List<String> _districts = <String>[
+    'North District',
+    'East Zone',
+    'West Block',
+    'Central Area',
+  ];
+
+  static const List<String> _visitLabels = <String>[
+    'Yesterday',
+    '2 days ago',
+    'Last week',
+    'Yesterday',
+  ];
+
+  static const List<SearchCustomerResult> _customerPool =
+      <SearchCustomerResult>[
+    SearchCustomerResult(
+      id: 'c1',
+      colonyName: 'Green Valley Colony',
+      role: 'Shop Keeper',
+      initials: 'DK',
+      phone: '+1 (555) 567-8901',
+      email: 'dkumar@primesol.com',
+    ),
+    SearchCustomerResult(
+      id: 'c2',
+      colonyName: 'Mirpur Colony',
+      role: 'Owner',
+      initials: 'AB',
+      phone: '+880 1711 000000',
+      email: 'owner@example.com',
+    ),
+  ];
 
   bool get hasMapsKey => (dotenv.env['GOOGLE_API_KEY'] ?? '').isNotEmpty;
 
+  /// True when the inline search has text: show full-screen search UI.
+  bool get showSearchResultsLayer =>
+      isSearchOpen && searchController.text.trim().isNotEmpty;
+
+  String get searchQueryDisplay => searchController.text.trim();
+
+  List<SearchColonyResult> get _searchColonyPool {
+    final List<SearchColonyResult> list = <SearchColonyResult>[
+      for (int i = 0; i < points.length; i++)
+        SearchColonyResult(
+          id: points[i].id,
+          name: points[i].name,
+          district: _districts[i % _districts.length],
+          customers: points[i].customers,
+          lastVisitLabel: _visitLabels[i % _visitLabels.length],
+        ),
+      const SearchColonyResult(
+        id: 'gv',
+        name: 'Green Valley Colony',
+        district: 'North District',
+        customers: 12,
+        lastVisitLabel: 'Yesterday',
+      ),
+    ];
+    return list;
+  }
+
+  bool _matches(String value, String query) {
+    if (query.isEmpty) {
+      return false;
+    }
+    return value.toLowerCase().contains(query.toLowerCase());
+  }
+
+  List<SearchColonyResult> get filteredColonyResults {
+    final String q = searchController.text.trim();
+    if (q.isEmpty) {
+      return <SearchColonyResult>[];
+    }
+    return _searchColonyPool
+        .where(
+          (SearchColonyResult c) =>
+              _matches(c.name, q) || _matches(c.district, q),
+        )
+        .toList();
+  }
+
+  List<SearchCustomerResult> get filteredCustomerResults {
+    final String q = searchController.text.trim();
+    if (q.isEmpty) {
+      return <SearchCustomerResult>[];
+    }
+    return _customerPool
+        .where(
+          (SearchCustomerResult c) =>
+              _matches(c.colonyName, q) ||
+              _matches(c.role, q) ||
+              _matches(c.phone, q) ||
+              _matches(c.email, q) ||
+              _matches(c.initials, q),
+        )
+        .toList();
+  }
+
+  List<SearchColonyResult> get visibleColonyResults {
+    if (searchFilter == MapSearchFilterKind.customers) {
+      return <SearchColonyResult>[];
+    }
+    return filteredColonyResults;
+  }
+
+  List<SearchCustomerResult> get visibleCustomerResults {
+    if (searchFilter == MapSearchFilterKind.colonies) {
+      return <SearchCustomerResult>[];
+    }
+    return filteredCustomerResults;
+  }
+
+  bool get hasSearchMatches =>
+      visibleColonyResults.isNotEmpty || visibleCustomerResults.isNotEmpty;
+
+  void setSearchFilter(MapSearchFilterKind kind) {
+    if (searchFilter == kind) {
+      return;
+    }
+    searchFilter = kind;
+    update();
+  }
+
+  List<SearchFilterChipData> buildSearchFilterChips() {
+    final int allCount =
+        filteredColonyResults.length + filteredCustomerResults.length;
+    final int colCount = filteredColonyResults.length;
+    final int custCount = filteredCustomerResults.length;
+    return <SearchFilterChipData>[
+      SearchFilterChipData(
+        id: 'all',
+        label: 'All ($allCount)',
+        selected: searchFilter == MapSearchFilterKind.all,
+        onTap: () => setSearchFilter(MapSearchFilterKind.all),
+      ),
+      SearchFilterChipData(
+        id: 'colonies',
+        label: 'Colonies ($colCount)',
+        selected: searchFilter == MapSearchFilterKind.colonies,
+        onTap: () => setSearchFilter(MapSearchFilterKind.colonies),
+      ),
+      SearchFilterChipData(
+        id: 'customers',
+        label: 'Customers ($custCount)',
+        onTap: () => setSearchFilter(MapSearchFilterKind.customers),
+        selected: searchFilter == MapSearchFilterKind.customers,
+      ),
+    ];
+  }
+
+  void _onSearchTextChanged() {
+    update();
+  }
+
   int get totalVisited => points.where((MapPointModel e) => e.isVisited).length;
+  int get todayColonies => points.length;
   int get totalCustomers =>
       points.fold<int>(0, (int total, MapPointModel e) => total + e.customers);
   int get totalVisits => points.fold<int>(0, (int total, MapPointModel e) => total + e.visits);
@@ -63,6 +223,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    searchController.addListener(_onSearchTextChanged);
     buildCustomMarkers();
   }
 
@@ -105,8 +266,11 @@ class HomeController extends GetxController {
   }
 
   void closeSearch() {
-    if (!isSearchOpen) return;
+    if (!isSearchOpen) {
+      return;
+    }
     isSearchOpen = false;
+    searchFilter = MapSearchFilterKind.all;
     searchController.clear();
     update();
   }
@@ -135,6 +299,7 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
+    searchController.removeListener(_onSearchTextChanged);
     searchController.dispose();
     super.onClose();
   }
