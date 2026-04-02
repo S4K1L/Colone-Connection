@@ -8,6 +8,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 
+import 'package:flutter_extension/helper/route_helper.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -185,29 +187,36 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             right: 16.w,
             bottom: 70.h,
-            child: Container(
-              height: 48.h,
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
-                ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Get.toNamed(AppRoutes.planRouteScreen),
                 borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.place_outlined,
-                    color: AppColors.white,
-                    size: 24.w,
+                child: Ink(
+                  height: 48.h,
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
+                    ),
+                    borderRadius: BorderRadius.circular(16.r),
                   ),
-                  SizedBox(width: 8.w),
-                  const AppText.smd(
-                    'Plan Route',
-                    fontSize: 16,
-                    color: AppColors.white,
+                  child: Row(
+                    children: <Widget>[
+                      Icon(
+                        Icons.place_outlined,
+                        color: AppColors.white,
+                        size: 24.w,
+                      ),
+                      SizedBox(width: 8.w),
+                      const AppText.smd(
+                        'Plan Route',
+                        fontSize: 16,
+                        color: AppColors.white,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

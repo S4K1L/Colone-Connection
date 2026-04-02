@@ -1,10 +1,15 @@
 import 'package:flutter_extension/views/base/custom_bottom_navbar.dart';
+import 'package:flutter_extension/views/screen/route/plan_route_screen.dart';
 import 'package:flutter_extension/views/screen/auth/forgot_password_screen.dart';
 import 'package:flutter_extension/views/screen/auth/create_account_screen.dart';
 import 'package:flutter_extension/views/screen/auth/login_screen.dart';
 import 'package:flutter_extension/views/screen/auth/otp_verification_screen.dart';
 import 'package:flutter_extension/views/screen/auth/password_updated_screen.dart';
 import 'package:flutter_extension/views/screen/auth/reset_password_screen.dart';
+import 'package:flutter_extension/views/screen/profile/about_us_screen.dart';
+import 'package:flutter_extension/views/screen/profile/change_password_screen.dart';
+import 'package:flutter_extension/views/screen/profile/edit_profile_screen.dart';
+import 'package:flutter_extension/views/screen/profile/terms_policies_screen.dart';
 import 'package:get/get.dart';
 
 import '../views/screen/splash/splash_screen.dart';
@@ -19,6 +24,11 @@ class AppRoutes{
   static String otpVerificationScreen="/otp_verification_screen";
   static String resetPasswordScreen="/reset_password_screen";
   static String passwordUpdatedScreen="/password_updated_screen";
+  static String planRouteScreen = '/plan_route';
+  static String editProfileScreen = '/edit_profile';
+  static String changePasswordScreen = '/change_password';
+  static String termsPoliciesScreen = '/terms_policies';
+  static String aboutUsScreen = '/about_us';
 
  static List<GetPage> page=[
     GetPage(name:splashScreen, page: ()=>const SplashScreen()),
@@ -29,7 +39,11 @@ class AppRoutes{
      GetPage(name:otpVerificationScreen, page: ()=>const OtpVerificationScreen()),
      GetPage(name:resetPasswordScreen, page: ()=>const ResetPasswordScreen()),
      GetPage(name:passwordUpdatedScreen, page: ()=>const PasswordUpdatedScreen()),
-  
+     GetPage(name: planRouteScreen, page: () => const PlanRouteScreen()),
+     GetPage(name: editProfileScreen, page: () => const EditProfileScreen()),
+     GetPage(name: changePasswordScreen, page: () => const ChangePasswordScreen()),
+     GetPage(name: termsPoliciesScreen, page: () => const TermsPoliciesScreen()),
+     GetPage(name: aboutUsScreen, page: () => const AboutUsScreen()),
 
   ];
 

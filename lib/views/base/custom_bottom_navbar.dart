@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/screen/home/home_screen.dart';
+import 'package:flutter_extension/views/screen/notifications/notifications_screen.dart';
+import 'package:flutter_extension/views/screen/profile/profile_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -18,8 +20,8 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
   late final List<Widget> pages = <Widget>[
     const HomeScreen(),
     const _NavPlaceholder(title: 'Colonies'),
-    const _NavPlaceholder(title: 'Alerts'),
-    const _NavPlaceholder(title: 'Profile'),
+    const NotificationsScreen(),
+    const ProfileScreen(),
   ];
 
   @override

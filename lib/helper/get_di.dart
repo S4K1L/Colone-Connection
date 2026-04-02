@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_extension/controller/auth_controller.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
+import 'package:flutter_extension/controller/notifications_controller.dart';
+import 'package:flutter_extension/controller/profile_controller.dart';
 import 'package:flutter_extension/controller/splash_controller.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +25,8 @@ Future<Map<String, Map<String, String>>>  init() async {
   Get.lazyPut(() => SplashController());
   Get.lazyPut(() => AuthController(), fenix: true);
   Get.lazyPut(() => HomeController(), fenix: true);
+  Get.lazyPut(() => NotificationsController(), fenix: true);
+  Get.lazyPut(() => ProfileController(), fenix: true);
 
 
 
