@@ -172,7 +172,7 @@ class CustomerDetailBottomBar extends StatelessWidget {
           Expanded(
             child: _BottomActionCard(
               svgPath: AppSvgPaths.navigate,
-              circleColor: Color(0xFF1E6FE6),
+              circleColor: const Color(0xFF1E6FE6),
               iconSize: 16.w,
               label: 'Navigate',
               onTap: () =>

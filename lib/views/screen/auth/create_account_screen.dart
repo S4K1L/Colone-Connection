@@ -45,7 +45,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         ),
                         boxShadow: <BoxShadow>[
                           BoxShadow(
-                            color: AppColors.green300.withOpacity(0.35),
+                            color: AppColors.green300.withValues(alpha: 0.35),
                             blurRadius: 16.r,
                             offset: Offset(0, 6.h),
                           ),
@@ -118,8 +118,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           child: Padding(
                             padding: EdgeInsets.only(top: 12.h),
                             child: RichText(
-                              text: TextSpan(
-                                children: const <InlineSpan>[
+                              text: const TextSpan(
+                                children: <InlineSpan>[
                                   TextSpan(
                                     text: 'By signing up, you agree to our ',
                                     style: TextStyle(color: AppColors.grey300, fontSize: 12),
@@ -152,9 +152,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     SizedBox(height: 14.h),
                     GestureDetector(
                       onTap: () => Get.offNamed(AppRoutes.loginScreen),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const <Widget>[
+                        children: <Widget>[
                           AppText.rg(
                             'Already have an account? ',
                             fontSize: 14,

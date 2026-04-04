@@ -120,10 +120,10 @@ class _PlanningRouteView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 20.h),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
-                      const AppText.smd(
+                      AppText.smd(
                         'Route Order',
                         fontSize: 16,
                         color: AppColors.grey500,

@@ -93,6 +93,6 @@ class AppStyles {
   static BoxShadow boxShadow =  BoxShadow(
       blurRadius: 4,
       offset: const Offset(0,0),
-      color:Colors.black.withOpacity(0.02),
+      color:Colors.black.withValues(alpha: 0.02),
       spreadRadius:0);
 }

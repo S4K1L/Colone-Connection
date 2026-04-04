@@ -5,7 +5,6 @@ class SplashController extends GetxController {
 
 
   jumpNextScreen() {
-    // TODO: Replace with actual session/token check.
     Get.offNamed(AppRoutes.loginScreen);
   }
 

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -282,7 +284,7 @@ class HomeController extends GetxController {
     const Offset centerOffset = Offset(size / 2, size / 2);
 
     final Paint shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.16)
+      ..color = Colors.black.withValues(alpha: .16)
       ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 8);
     canvas.drawCircle(centerOffset.translate(0, 7), 24, shadowPaint);
 

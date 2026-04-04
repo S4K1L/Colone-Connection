@@ -121,7 +121,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           ),
                           SizedBox(height: 16.h),
-                          AppText.rg(
+                          const AppText.rg(
                             'Full Name',
                             fontSize: 13,
                             color: AppColors.grey400,

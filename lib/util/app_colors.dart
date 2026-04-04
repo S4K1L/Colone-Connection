@@ -57,7 +57,7 @@ class AppColors {
   static Color subTextColor = grey50;
   static Color hintColor = grey100;
   static Color greyColor = grey100;
-  static Color fillColor = grey50.withOpacity(0.3);
+  static Color fillColor = grey50.withValues(alpha: 0.3);
   static Color dividerColor = grey300;
   static Color shadowColor = const Color(0xFF2B2A2A);
   static Color bottomBarColor = grey600;

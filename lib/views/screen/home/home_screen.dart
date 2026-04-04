@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
 import 'package:flutter_extension/data/model/map_point_model.dart';
@@ -151,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(10.r),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: AppColors.grey300.withOpacity(0.22),
+                    color: AppColors.grey300.withValues(alpha: 0.22),
                     blurRadius: 14.r,
                     offset: Offset(0, 6.h),
                   ),
@@ -244,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(14.r),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: AppColors.grey300.withOpacity(0.24),
+                color: AppColors.grey300.withValues(alpha: 0.24),
                 blurRadius: 18,
                 offset: Offset(0, 8.h),
               ),
@@ -373,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: AppColors.grey300.withOpacity(0.25),
+              color: AppColors.grey300.withValues(alpha: 0.25),
               blurRadius: 10.r,
               offset: Offset(0, 4.h),
             ),
@@ -422,14 +424,14 @@ class MapAppBar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      AppText.smd(
+                      const AppText.smd(
                         'Hlw, Rahim',
                         fontSize: 24,
                         color: AppColors.white,
                         useResponsiveSize: true,
                       ),
                       SizedBox(height: 4.h),
-                      AppText.rg(
+                      const AppText.rg(
                         'March 5, 2026',
                         fontSize: 13,
                         color: AppColors.white80,
@@ -447,12 +449,12 @@ class MapAppBar extends StatelessWidget {
                     horizontal: home.isSearchOpen ? 12.w : 0,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.white.withOpacity(0.18),
+                    color: AppColors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(
                       home.isSearchOpen ? 16.r : 11.r,
                     ),
                     border: Border.all(
-                      color: AppColors.white.withOpacity(0.55),
+                      color: AppColors.white.withValues(alpha: 0.55),
                       width: 1,
                     ),
                   ),
@@ -520,7 +522,7 @@ class MapAppBar extends StatelessWidget {
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 12,
                   offset: Offset(0, 4.h),
                 ),
@@ -563,7 +565,7 @@ class _StatColumnDivider extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Container(
         width: 1,
-        color: AppColors.grey100.withOpacity(0.55),
+        color: AppColors.grey100.withValues(alpha: 0.55),
       ),
     );
   }

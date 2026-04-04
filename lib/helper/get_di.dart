@@ -1,4 +1,6 @@
 
+// ignore_for_file: no_leading_underscores_for_local_identifiers
+
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_extension/controller/auth_controller.dart';
@@ -35,11 +37,11 @@ Future<Map<String, Map<String, String>>>  init() async {
 
 
   //Retrieving localized data
-  Map<String, Map<String, String>> _languages = Map();
+  Map<String, Map<String, String>> _languages = {};
   for(LanguageModel languageModel in AppConstants.languages) {
     String jsonStringValues =  await rootBundle.loadString('assets/language/${languageModel.languageCode}.json');
     Map<String, dynamic> _mappedJson = json.decode(jsonStringValues);
-    Map<String, String> _json = Map();
+    Map<String, String> _json = {};
     _mappedJson.forEach((key, value) {
       _json[key] = value.toString();
     });

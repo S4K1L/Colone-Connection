@@ -86,7 +86,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             ),
                           ),
                           SizedBox(height: 16.h),
-                          AppText.rg(
+                          const AppText.rg(
                             'Old Password',
                             fontSize: 14,
                             color: AppColors.grey400,
@@ -100,7 +100,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 setState(() => _obscureOld = !_obscureOld),
                           ),
                           SizedBox(height: 14.h),
-                          AppText.rg(
+                          const AppText.rg(
                             'New Password',
                             fontSize: 14,
                             color: AppColors.grey400,
@@ -114,7 +114,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 setState(() => _obscureNew = !_obscureNew),
                           ),
                           SizedBox(height: 14.h),
-                          AppText.rg(
+                          const AppText.rg(
                             'Confirm Password',
                             fontSize: 14,
                             color: AppColors.grey400,

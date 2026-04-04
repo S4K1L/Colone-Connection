@@ -38,7 +38,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                       boxShadow: <BoxShadow>[
                         BoxShadow(
-                          color: AppColors.green300.withOpacity(0.35),
+                          color: AppColors.green300.withValues(alpha: 0.35),
                           blurRadius: 16.r,
                           offset: Offset(0, 6.h),
                         ),

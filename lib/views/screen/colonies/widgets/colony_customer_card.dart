@@ -122,7 +122,7 @@ class ColonyCustomerCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    AppText.smd(
+                    const AppText.smd(
                       'View Details',
                       fontSize: 13,
                       color: _linkGreen,
@@ -169,7 +169,7 @@ class _StatusBadge extends StatelessWidget {
               useResponsiveSize: true,
             ),
             SizedBox(width: 6.w),
-            AppText.smd(
+            const AppText.smd(
               'Visited',
               fontSize: 11,
               color: ColonyCustomerCard._visitedText,
@@ -185,7 +185,7 @@ class _StatusBadge extends StatelessWidget {
         color: ColonyCustomerCard._overdueBg,
         borderRadius: BorderRadius.circular(20.r),
       ),
-      child: AppText.smd(
+      child: const AppText.smd(
         'Overdue',
         fontSize: 11,
         color: ColonyCustomerCard._overdueText,

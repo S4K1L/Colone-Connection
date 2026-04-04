@@ -28,7 +28,7 @@ class FormMapPreview extends StatelessWidget {
           children: <Widget>[
             Icon(Icons.map_outlined, size: 40.sp, color: AppColors.grey300),
             SizedBox(height: 8.h),
-            AppText.rg(
+            const AppText.rg(
               'Map preview',
               fontSize: 13,
               color: AppColors.grey300,
@@ -86,7 +86,7 @@ class FormMapPreview extends StatelessWidget {
                           color: Colors.blue.shade700,
                         ),
                         SizedBox(width: 6.w),
-                        AppText.smd(
+                        const AppText.smd(
                           'Use Current',
                           fontSize: 12,
                           color: AppColors.grey500,

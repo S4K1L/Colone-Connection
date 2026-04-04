@@ -43,7 +43,7 @@ class _ColonyNavigateScreenState extends State<ColonyNavigateScreen> {
 
   void _fitRoute() {
     if (_mapController == null) return;
-    final List<LatLng> pts = ColonyNavigateScreen._routePoints;
+    const List<LatLng> pts = ColonyNavigateScreen._routePoints;
     double minLat = pts.first.latitude;
     double maxLat = pts.first.latitude;
     double minLng = pts.first.longitude;
@@ -114,7 +114,7 @@ class _ColonyNavigateScreenState extends State<ColonyNavigateScreen> {
                                         useResponsiveSize: true,
                                       ),
                                       SizedBox(height: 4.h),
-                                      AppText.rg(
+                                      const AppText.rg(
                                         'Distance',
                                         fontSize: 12,
                                         color: AppColors.grey300,
@@ -138,7 +138,7 @@ class _ColonyNavigateScreenState extends State<ColonyNavigateScreen> {
                                         useResponsiveSize: true,
                                       ),
                                       SizedBox(height: 4.h),
-                                      AppText.rg(
+                                      const AppText.rg(
                                         'ETA',
                                         fontSize: 12,
                                         color: AppColors.grey300,
@@ -168,7 +168,7 @@ class _ColonyNavigateScreenState extends State<ColonyNavigateScreen> {
                                 color: const Color(0xFFE8EAED),
                                 alignment: Alignment.center,
                                 padding: EdgeInsets.all(24.w),
-                                child: AppText.rg(
+                                child: const AppText.rg(
                                   'Select the Machinery tab to view the navigation map.',
                                   fontSize: 14,
                                   color: AppColors.grey400,
@@ -261,46 +261,6 @@ class _NavigateHeader extends StatelessWidget {
     );
   }
 }
-
-class _NavTab extends StatelessWidget {
-  const _NavTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.green500 : AppColors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: selected ? AppColors.green500 : AppColors.grey100,
-            ),
-          ),
-          child: AppText.smd(
-            label,
-            fontSize: 12,
-            color: selected ? AppColors.white : AppColors.grey500,
-            useResponsiveSize: true,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MapPanel extends StatelessWidget {
   const _MapPanel({
     required this.hasMapsKey,
@@ -318,7 +278,7 @@ class _MapPanel extends StatelessWidget {
       return Container(
         color: AppColors.grey50,
         alignment: Alignment.center,
-        child: AppText.rg(
+        child: const AppText.rg(
           'Add GOOGLE_API_KEY to use the map.',
           fontSize: 13,
           color: AppColors.grey300,
@@ -367,7 +327,7 @@ class _MapPanel extends StatelessWidget {
         Positioned(
           left: 12.w,
           top: 12.h,
-          child: _MapCalloutChip(
+          child: const _MapCalloutChip(
             icon: Icons.directions_car_outlined,
             line1: '6 min',
             line2: '2.9 km',
@@ -376,7 +336,7 @@ class _MapPanel extends StatelessWidget {
         Positioned(
           right: 12.w,
           top: 72.h,
-          child: _MapCalloutChip(
+          child: const _MapCalloutChip(
             icon: Icons.directions_bus_outlined,
             line1: '11 min',
             line2: '',
@@ -490,7 +450,7 @@ class _ArrivedBar extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    AppText.smd(
+                    const AppText.smd(
                       'Arrived',
                       fontSize: 14,
                       color: AppColors.grey500,
