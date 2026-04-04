@@ -33,61 +33,65 @@ class RouteFlowHeader extends StatelessWidget {
           ],
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          GestureDetector(
-            onTap: onBack,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 40.w,
-              height: 40.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.22),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppColors.white,
-                size: 18.w,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          
+          children: <Widget>[
+            GestureDetector(
+              onTap: onBack,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 40.w,
+                height: 40.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_back,
+                  color: AppColors.white,
+                  size: 18.w,
+                ),
               ),
             ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                AppText.smd(
-                  title,
-                  fontSize: 20,
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  AppText.smd(
+                    title,
+                    fontSize: 20,
+                    color: AppColors.white,
+                    useResponsiveSize: true,
+                  ),
+                  if (subtitle != null) ...<Widget>[
+                    SizedBox(height: 4.h),
+                    AppText.rg(
+                      subtitle!,
+                      fontSize: 13,
+                      color: AppColors.white80,
+                      useResponsiveSize: true,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (trailing != null)
+              Padding(
+                padding: EdgeInsets.only(top: 4.h),
+                child: AppText.rg(
+                  trailing!,
+                  fontSize: 13,
                   color: AppColors.white,
                   useResponsiveSize: true,
                 ),
-                if (subtitle != null) ...<Widget>[
-                  SizedBox(height: 4.h),
-                  AppText.rg(
-                    subtitle!,
-                    fontSize: 13,
-                    color: AppColors.white80,
-                    useResponsiveSize: true,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (trailing != null)
-            Padding(
-              padding: EdgeInsets.only(top: 4.h),
-              child: AppText.rg(
-                trailing!,
-                fontSize: 13,
-                color: AppColors.white,
-                useResponsiveSize: true,
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
