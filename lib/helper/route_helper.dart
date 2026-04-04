@@ -8,6 +8,11 @@ import 'package:flutter_extension/views/screen/auth/password_updated_screen.dart
 import 'package:flutter_extension/views/screen/auth/reset_password_screen.dart';
 import 'package:flutter_extension/views/screen/profile/change_password_screen.dart';
 import 'package:flutter_extension/views/screen/profile/edit_profile_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/add_colony_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/add_customer_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/colony_customers_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/colony_navigate_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/customer_detail_screen.dart';
 import 'package:get/get.dart';
 import '../views/screen/splash/splash_screen.dart';
 
@@ -24,6 +29,11 @@ class AppRoutes{
   static String planRouteScreen = '/plan_route';
   static String editProfileScreen = '/edit_profile';
   static String changePasswordScreen = '/change_password';
+  static String colonyCustomers = '/colony_customers';
+  static String addColony = '/add_colony';
+  static String addCustomer = '/add_customer';
+  static String customerDetail = '/customer_detail';
+  static String colonyNavigate = '/colony_navigate';
 
  static List<GetPage> page=[
     GetPage(name:splashScreen, page: ()=>const SplashScreen()),
@@ -37,6 +47,11 @@ class AppRoutes{
      GetPage(name: planRouteScreen, page: () => const PlanRouteScreen()),
      GetPage(name: editProfileScreen, page: () => const EditProfileScreen()),
      GetPage(name: changePasswordScreen, page: () => const ChangePasswordScreen()),
+     GetPage(name: colonyCustomers, page: () => const ColonyCustomersScreen()),
+     GetPage(name: addColony, page: () => const AddColonyScreen()),
+     GetPage(name: addCustomer, page: () => const AddCustomerScreen()),
+     GetPage(name: customerDetail, page: () => const CustomerDetailScreen()),
+     GetPage(name: colonyNavigate, page: () => const ColonyNavigateScreen()),
   ];
 
 

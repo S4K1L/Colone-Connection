@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 
+import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -292,21 +293,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               SizedBox(height: 9.h),
-              Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Get.toNamed(
+                    AppRoutes.colonyCustomers,
+                    arguments: ColonyCustomersArgs(
+                      colonyId: point.id,
+                      colonyName: point.name,
+                      totalCustomers: point.customers,
+                      colonyArea: 'North Delhi',
+                    ),
                   ),
-                ),
-                child: const AppText.md(
-                  'View Details',
-                  fontSize: 12,
-                  useResponsiveSize: true,
-                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      gradient: const LinearGradient(
+                        colors: <Color>[
+                          Color(0xFF408E1A),
+                          Color(0xFF17B85F),
+                        ],
+                      ),
+                    ),
+                    child: const AppText.md(
+                      'View Details',
+                      fontSize: 12,
+                      useResponsiveSize: true,
+                      color: AppColors.white,
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -93,9 +93,9 @@ class LoginScreen extends StatelessWidget {
                   SizedBox(height: 14.h),
                   GestureDetector(
                     onTap: () => Get.toNamed(AppRoutes.createAccountScreen),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const <Widget>[
+                      children: <Widget>[
                         AppText.rg(
                           "Don't have an account? ",
                           fontSize: 14,

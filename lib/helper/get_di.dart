@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_extension/controller/auth_controller.dart';
+import 'package:flutter_extension/controller/colonies_controller.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
 import 'package:flutter_extension/controller/notifications_controller.dart';
 import 'package:flutter_extension/controller/profile_controller.dart';
@@ -25,6 +26,7 @@ Future<Map<String, Map<String, String>>>  init() async {
   Get.lazyPut(() => SplashController());
   Get.lazyPut(() => AuthController(), fenix: true);
   Get.lazyPut(() => HomeController(), fenix: true);
+  Get.lazyPut(() => ColoniesController(), fenix: true);
   Get.lazyPut(() => NotificationsController(), fenix: true);
   Get.lazyPut(() => ProfileController(), fenix: true);
 

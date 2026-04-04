@@ -8,6 +8,7 @@ abstract final class AppSvgPaths {
   static const String lock = 'assets/icons/lock.svg';
   static const String reset = 'assets/icons/reset.svg';
   static const String success = 'assets/icons/success.svg';
+  static const String navigate = 'assets/icons/navigate.svg';
   static const String delete = 'assets/icons/delete.svg';
   static const String hi = 'assets/icons/hi.svg';
   static const String logout = 'assets/icons/logout.svg';

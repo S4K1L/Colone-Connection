@@ -100,12 +100,12 @@ class AuthController extends GetxController {
   }
 
   Future<void> login() async {
-    if (!(loginFormKey.currentState?.validate() ?? false)) return;
+    // if (!(loginFormKey.currentState?.validate() ?? false)) return;
     loginLoading = true;
-    update();
-    await Future<void>.delayed(const Duration(seconds: 2));
-    loginLoading = false;
-    update();
+    // update();
+    // await Future<void>.delayed(const Duration(seconds: 2));
+    // loginLoading = false;
+    // update();
     Get.offAllNamed(AppRoutes.homeScreen);
   }
 
