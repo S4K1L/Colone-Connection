@@ -359,11 +359,9 @@ class CustomerDetailController extends GetxController {
         : 'Green Valley Colony';
     final String area =
         args.colonyArea.isNotEmpty ? args.colonyArea : 'North Delhi';
-    final String typo = full.replaceAll('Colony', 'Colone');
     Get.toNamed(
       AppRoutes.colonyNavigate,
       arguments: ColonyNavigateArgs(
-        titleTypo: typo,
         titleFull: full,
         area: area,
         distanceKm: '1',

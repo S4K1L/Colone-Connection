@@ -136,7 +136,7 @@ class ProfileCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           ProfileContactLine(
-            svgPath: AppSvgPaths.colone,
+            svgPath: AppSvgPaths.colony,
             text: profile.company,
           ),
           SizedBox(height: 18.h),

@@ -85,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               SizedBox(height: 20.h),
               const AppText.smd(
-                'Colone\nConnection',
+                'Colony\nConnection',
                 fontSize: 40,
                 textAlign: TextAlign.center,
                 height: 0.98,

@@ -52,7 +52,7 @@ class CustomBottomUi extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<String> iconPaths = <String>[
       'assets/icons/map.svg',
-      'assets/icons/colone.svg',
+      'assets/icons/colony.svg',
       'assets/icons/alert.svg',
       'assets/icons/profile.svg',
     ];

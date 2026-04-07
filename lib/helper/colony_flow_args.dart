@@ -54,14 +54,12 @@ class CustomerDetailArgs {
 /// [Get.arguments] for [ColonyNavigateScreen] (colony route / directions).
 class ColonyNavigateArgs {
   const ColonyNavigateArgs({
-    this.titleTypo = 'Green Valley Colone',
     this.titleFull = 'Green Valley Colony',
     this.area = 'North Delhi',
     this.distanceKm = '1',
     this.etaMinutes = '6',
   });
 
-  final String titleTypo;
   final String titleFull;
   final String area;
   final String distanceKm;

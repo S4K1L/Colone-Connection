@@ -235,16 +235,9 @@ class _NavigateHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 AppText.smd(
-                  args.titleTypo,
+                  args.titleFull,
                   fontSize: 20,
                   color: AppColors.white,
-                  useResponsiveSize: true,
-                ),
-                SizedBox(height: 4.h),
-                AppText.rg(
-                  args.titleFull,
-                  fontSize: 13,
-                  color: AppColors.white.withValues(alpha: 0.92),
                   useResponsiveSize: true,
                 ),
               ],

@@ -57,7 +57,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     const AppText.smd('Create Account', fontSize: 34 / 2, color: AppColors.grey500),
                     SizedBox(height: 6.h),
                     const AppText.rg(
-                      'Join Colone Connection Today',
+                      'Join Colony Connection Today',
                       fontSize: 14,
                       color: AppColors.grey300,
                     ),

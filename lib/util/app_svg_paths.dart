@@ -1,7 +1,7 @@
 /// Central paths for bundled SVG icons (`assets/icons/`).
 abstract final class AppSvgPaths {
   static const String map = 'assets/icons/map.svg';
-  static const String colone = 'assets/icons/colone.svg';
+  static const String colony = 'assets/icons/colony.svg';
   static const String profile = 'assets/icons/profile.svg';
   static const String alert = 'assets/icons/alert.svg';
   static const String mail = 'assets/icons/mail.svg';

@@ -4,7 +4,7 @@ import '../data/model/language_model.dart';
 
 class AppConstants{
 
-  static const String APP_NAME = 'Colone Connection';
+  static const String APP_NAME = 'Colony Connection';
   static const double APP_VERSION = 1.0;
 
 
