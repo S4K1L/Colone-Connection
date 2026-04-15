@@ -56,7 +56,7 @@ class CustomBottomUi extends StatelessWidget {
       'assets/icons/alert.svg',
       'assets/icons/profile.svg',
     ];
-    final List<String> labels = <String>['Map', 'Colonies', 'Alerts', 'Profile'];
+    final List<String> labels = <String>['Map', 'Colony', 'Alerts', 'Profile'];
 
     return Container(
       margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 8.h),

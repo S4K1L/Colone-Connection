@@ -8,8 +8,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-class ResetPasswordScreen extends StatelessWidget {
+class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
+
+  @override
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+}
+
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +26,7 @@ class ResetPasswordScreen extends StatelessWidget {
         backgroundColor: AppColors.grey50,
         body: SafeArea(
           child: Form(
-            key: auth.resetFormKey,
+            key: _formKey,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Column(
@@ -176,7 +183,10 @@ class ResetPasswordScreen extends StatelessWidget {
                   AppPrimaryButton(
                     title: 'Update Password',
                     isLoading: auth.resetLoading,
-                    onPressed: authController.resetPassword,
+                    onPressed: () {
+                      if (!(_formKey.currentState?.validate() ?? false)) return;
+                      authController.resetPassword();
+                    },
                   ),
                   SizedBox(height: 28.h),
                 ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/auth_controller.dart';
-import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_primary_button.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
@@ -16,6 +15,7 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _agreedToTerms = false;
 
   @override
@@ -26,7 +26,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         backgroundColor: AppColors.grey50,
         body: SafeArea(
           child: Form(
-            key: auth.signupFormKey,
+            key: _formKey,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: SingleChildScrollView(
@@ -147,11 +147,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     AppPrimaryButton(
                       title: 'Sign Up',
                       isLoading: auth.signupLoading,
-                      onPressed: () => authController.signUp(agreedToTerms: _agreedToTerms),
+                      onPressed: () {
+                        if (!(_formKey.currentState?.validate() ?? false)) return;
+                        authController.signUp(agreedToTerms: _agreedToTerms);
+                      },
                     ),
                     SizedBox(height: 14.h),
                     GestureDetector(
-                      onTap: () => Get.offNamed(AppRoutes.loginScreen),
+                      onTap: () => Get.back(),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[

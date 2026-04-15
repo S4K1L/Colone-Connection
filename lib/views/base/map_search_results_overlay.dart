@@ -104,7 +104,7 @@ class _SearchResultsList extends StatelessWidget {
       children: <Widget>[
         if (showColonies) ...<Widget>[
           AppText.smd(
-            'Colonies (${colonies.length})',
+            'Colony (${colonies.length})',
             fontSize: 15,
             color: AppColors.grey500,
             useResponsiveSize: true,

@@ -7,11 +7,6 @@ import 'package:get/get.dart';
 class AuthController extends GetxController {
   static const int otpLength = 6;
 
-  final GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> signupFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> forgotFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> resetFormKey = GlobalKey<FormState>();
-
   final TextEditingController loginEmailController = TextEditingController();
   final TextEditingController loginPasswordController = TextEditingController();
   final TextEditingController signupNameController = TextEditingController();
@@ -100,7 +95,6 @@ class AuthController extends GetxController {
   }
 
   Future<void> login() async {
-    // if (!(loginFormKey.currentState?.validate() ?? false)) return;
     loginLoading = true;
     // update();
     // await Future<void>.delayed(const Duration(seconds: 2));
@@ -133,7 +127,6 @@ class AuthController extends GetxController {
       Get.snackbar('Terms Required', 'Please accept terms and privacy policy');
       return;
     }
-    if (!(signupFormKey.currentState?.validate() ?? false)) return;
     signupLoading = true;
     update();
     await Future<void>.delayed(const Duration(seconds: 2));
@@ -147,7 +140,6 @@ class AuthController extends GetxController {
   }
 
   Future<void> sendOtp() async {
-    if (!(forgotFormKey.currentState?.validate() ?? false)) return;
     forgotLoading = true;
     update();
     await Future<void>.delayed(const Duration(seconds: 2));
@@ -203,7 +195,6 @@ class AuthController extends GetxController {
   }
 
   Future<void> resetPassword() async {
-    if (!(resetFormKey.currentState?.validate() ?? false)) return;
     resetLoading = true;
     update();
     await Future<void>.delayed(const Duration(seconds: 2));

@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
 import 'package:flutter_extension/data/model/map_point_model.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_extension/views/base/map_search_results_overlay.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
@@ -25,6 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Offset? _popupOffset;
   String? _popupForId;
   double _currentZoom = 13.8;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestLocationPermissionIfAndroid();
+    });
+  }
+
+  Future<void> _requestLocationPermissionIfAndroid() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    final PermissionStatus status = await Permission.location.status;
+    if (status.isGranted || status.isLimited) return;
+    await Permission.location.request();
+  }
 
   Future<void> _updatePopupPosition(MapPointModel point) async {
     if (_mapController == null || !mounted) return;
@@ -472,7 +490,7 @@ class MapAppBar extends StatelessWidget {
                                 decoration: InputDecoration(
                                   isDense: true,
                                   hintText:
-                                      'Search colonies or customers...',
+                                      'Search colony or customers...',
                                   hintStyle: TextStyle(
                                     color: AppColors.white80,
                                     fontSize: 11.sp,
@@ -535,7 +553,7 @@ class MapAppBar extends StatelessWidget {
                   children: <Widget>[
                     _TopStat(
                       value: '${home.todayColonies}',
-                      label: "Today's Colonies",
+                      label: "Today's Colony",
                     ),
                     _StatColumnDivider(),
                     _TopStat(

@@ -9,8 +9,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +27,7 @@ class LoginScreen extends StatelessWidget {
         backgroundColor: AppColors.grey50,
         body: SafeArea(
           child: Form(
-            key: auth.loginFormKey,
+            key: _formKey,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
@@ -57,7 +64,7 @@ class LoginScreen extends StatelessWidget {
                   const AppText.smd('Welcome Back', fontSize: 24, color: AppColors.grey500),
                   SizedBox(height: 8.h),
                   const AppText.rg(
-                    'Sign in to continue to RouteOptima',
+                    'Sign in to continue to Colony',
                     fontSize: 14,
                     color: AppColors.grey300,
                   ),
@@ -88,7 +95,10 @@ class LoginScreen extends StatelessWidget {
                   AppPrimaryButton(
                     title: 'Sign In',
                     isLoading: auth.loginLoading,
-                    onPressed: authController.login,
+                    onPressed: () {
+                      if (!(_formKey.currentState?.validate() ?? false)) return;
+                      authController.login();
+                    },
                   ),
                   SizedBox(height: 14.h),
                   GestureDetector(

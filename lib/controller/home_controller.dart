@@ -15,41 +15,41 @@ import 'package:get/get.dart';
 enum MapSearchFilterKind { all, colonies, customers }
 
 class HomeController extends GetxController {
-  static const LatLng center = LatLng(23.7808, 90.2792);
+  static const LatLng center = LatLng(23.7806, 90.4056);
   final TextEditingController searchController = TextEditingController();
 
   final List<MapPointModel> points = <MapPointModel>[
     const MapPointModel(
       id: 'm1',
-      name: 'Blue Ridge Estate',
+      name: 'Mohakhali DOHS',
       visits: 15,
       customers: 58,
       isVisited: true,
-      position: LatLng(23.7814, 90.2700),
+      position: LatLng(23.7809, 90.4050),
     ),
     const MapPointModel(
       id: 'm2',
-      name: 'Mirpur Colony',
+      name: 'Wireless Gate Colony',
       visits: 8,
       customers: 40,
       isVisited: false,
-      position: LatLng(23.7789, 90.2860),
+      position: LatLng(23.7788, 90.4084),
     ),
     const MapPointModel(
       id: 'm3',
-      name: 'Savar North',
+      name: 'Gulshan Link Road',
       visits: 11,
       customers: 36,
       isVisited: true,
-      position: LatLng(23.7753, 90.2790),
+      position: LatLng(23.7834, 90.4111),
     ),
     const MapPointModel(
       id: 'm4',
-      name: 'Sheorapara Point',
+      name: 'Amtoli Junction',
       visits: 5,
       customers: 20,
       isVisited: false,
-      position: LatLng(23.7855, 90.2850),
+      position: LatLng(23.7765, 90.4018),
     ),
   ];
 
@@ -199,7 +199,7 @@ class HomeController extends GetxController {
       ),
       SearchFilterChipData(
         id: 'colonies',
-        label: 'Colonies ($colCount)',
+        label: 'Colony ($colCount)',
         selected: searchFilter == MapSearchFilterKind.colonies,
         onTap: () => setSearchFilter(MapSearchFilterKind.colonies),
       ),

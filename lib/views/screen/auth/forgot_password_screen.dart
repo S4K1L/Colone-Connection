@@ -9,8 +9,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +27,7 @@ class ForgotPasswordScreen extends StatelessWidget {
         backgroundColor: AppColors.grey50,
         body: SafeArea(
           child: Form(
-            key: auth.forgotFormKey,
+            key: _formKey,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Column(
@@ -91,7 +98,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                   AppPrimaryButton(
                     title: 'Send OTP',
                     isLoading: auth.forgotLoading,
-                    onPressed: authController.sendOtp,
+                    onPressed: () {
+                      if (!(_formKey.currentState?.validate() ?? false)) return;
+                      authController.sendOtp();
+                    },
                   ),
                   SizedBox(height: 16.h),
                   Row(

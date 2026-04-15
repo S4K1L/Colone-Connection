@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
 import 'package:flutter_extension/controller/plan_route_controller.dart';
@@ -67,7 +69,7 @@ class _PlanningRouteView extends StatelessWidget {
           RouteFlowHeader(
             onBack: () => Get.back(),
             title: 'Planning Route',
-            subtitle: '${c.activeColonyCount} Colonies Active',
+            subtitle: '${c.activeColonyCount} Colony Active',
           ),
           RouteStatsCard(
             items: <RouteStatItem>[
@@ -82,44 +84,54 @@ class _PlanningRouteView extends StatelessWidget {
               ),
             ],
           ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.r),
+              child: SizedBox(
+                height: 200.h,
+                width: double.infinity,
+                child: c.hasMapsKey
+                    ? GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: c.stops.isNotEmpty
+                              ? c.stops.first.position
+                              : HomeController.center,
+                          zoom: 12.5,
+                        ),
+                        markers: c.markers,
+                        polylines: c.buildPolylines(),
+                        zoomControlsEnabled: false,
+                        myLocationButtonEnabled: false,
+                        compassEnabled: false,
+                        mapToolbarEnabled: false,
+                        onMapCreated: c.onMapCreated,
+                        onCameraMove: c.onCameraMove,
+                        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                          Factory<OneSequenceGestureRecognizer>(
+                            () => EagerGestureRecognizer(),
+                          ),
+                        },
+                      )
+                    : Container(
+                        color: AppColors.grey50,
+                        alignment: Alignment.center,
+                        child: const AppText.rg(
+                          'Map unavailable',
+                          fontSize: 13,
+                          color: AppColors.grey300,
+                          useResponsiveSize: true,
+                        ),
+                      ),
+              ),
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+              padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 12.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16.r),
-                    child: SizedBox(
-                      height: 200.h,
-                      child: c.hasMapsKey
-                          ? GoogleMap(
-                              initialCameraPosition: CameraPosition(
-                                target: c.stops.isNotEmpty
-                                    ? c.stops.first.position
-                                    : HomeController.center,
-                                zoom: 12.5,
-                              ),
-                              markers: c.markers,
-                              zoomControlsEnabled: false,
-                              myLocationButtonEnabled: false,
-                              compassEnabled: false,
-                              mapToolbarEnabled: false,
-                              onMapCreated: c.onMapCreated,
-                            )
-                          : Container(
-                              color: AppColors.grey50,
-                              alignment: Alignment.center,
-                              child: const AppText.rg(
-                                'Map unavailable',
-                                fontSize: 13,
-                                color: AppColors.grey300,
-                                useResponsiveSize: true,
-                              ),
-                            ),
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
@@ -358,16 +370,28 @@ class _ActiveRouteMapView extends StatelessWidget {
               zoom: navigating ? 15 : 13.5,
             ),
             markers: c.markers,
-            polylines: navigating ? c.buildPolylines() : <Polyline>{},
+            polylines: c.buildPolylines(),
             myLocationEnabled: true,
             zoomControlsEnabled: false,
             myLocationButtonEnabled: false,
             compassEnabled: false,
             mapToolbarEnabled: false,
             onMapCreated: c.onMapCreated,
+            onCameraMove: c.onCameraMove,
           )
         else
           Container(color: AppColors.grey50),
+        Positioned(
+          right: 14.w,
+          bottom: 220.h,
+          child: Column(
+            children: <Widget>[
+              _RouteZoomButton(icon: Icons.add, onTap: () => c.zoomIn()),
+              SizedBox(height: 10.h),
+              _RouteZoomButton(icon: Icons.remove, onTap: () => c.zoomOut()),
+            ],
+          ),
+        ),
         SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -392,6 +416,40 @@ class _ActiveRouteMapView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RouteZoomButton extends StatelessWidget {
+  const _RouteZoomButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Ink(
+          width: 44.w,
+          height: 44.w,
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: AppColors.grey300.withValues(alpha: 0.22),
+                blurRadius: 10,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: AppColors.grey500, size: 24.w),
+        ),
+      ),
     );
   }
 }
@@ -433,7 +491,7 @@ class _RouteBottomPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           AppText.rg(
-            '$visited of $total colonies visited',
+            '$visited of $total colony visited',
             fontSize: 14,
             color: AppColors.grey400,
             textAlign: TextAlign.center,

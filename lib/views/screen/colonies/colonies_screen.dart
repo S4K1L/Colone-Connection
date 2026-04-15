@@ -66,14 +66,14 @@ class _ColoniesBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const AppText.smd(
-                        'Colonies',
+                        'Colony',
                         fontSize: 22,
                         color: AppColors.white,
                         useResponsiveSize: true,
                       ),
                       SizedBox(height: 6.h),
                       const AppText.rg(
-                        'Total: ${ColoniesController.totalColonies}',
+                        'Total: ${ColoniesController.totalColonies} Colony',
                         fontSize: 14,
                         color: AppColors.white,
                         useResponsiveSize: true,

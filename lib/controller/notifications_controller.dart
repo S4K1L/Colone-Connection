@@ -42,7 +42,7 @@ class NotificationsController extends GetxController {
       const AppNotificationModel(
         id: '2',
         title: 'Route Updated',
-        body: 'Your route now includes 3 new colonies.',
+        body: 'Your route now includes 3 new colony.',
         timeAgo: '1 hour ago',
         accentColor: NotificationAccentColors.lightBlue,
       ),

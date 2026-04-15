@@ -8,7 +8,7 @@ class MapSearchHeaderBar extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onBack,
-    this.hintText = 'Search colonies or customers...',
+    this.hintText = 'Search colony or customers...',
   });
 
   final TextEditingController controller;

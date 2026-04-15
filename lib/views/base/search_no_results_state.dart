@@ -43,7 +43,7 @@ class SearchNoResultsState extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
             AppText.rg(
-              "We couldn't find any colonies or customers matching '$query'. "
+              "We couldn't find any colony or customers matching '$query'. "
               'Try a different search term.',
               fontSize: 14,
               color: AppColors.grey300,
