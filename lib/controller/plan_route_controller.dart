@@ -6,7 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
-import 'package:flutter_extension/data/model/route_stop_model.dart';
+import 'package:flutter_extension/model/route_stop_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';

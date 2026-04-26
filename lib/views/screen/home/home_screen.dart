@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
-import 'package:flutter_extension/data/model/map_point_model.dart';
+import 'package:flutter_extension/model/map_point_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/base/map_search_results_overlay.dart';
@@ -124,9 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _mapTab(BuildContext context, HomeController home) {
-    return Expanded(
-      child: Stack(
-        children: <Widget>[
+    return Stack(
+      children: <Widget>[
           if (home.hasMapsKey)
             GoogleMap(
               initialCameraPosition: const CameraPosition(
@@ -248,7 +247,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _markerPopupCard(home.selectedPoint!),
             ),
         ],
-      ),
     );
   }
 

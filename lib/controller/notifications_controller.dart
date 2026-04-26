@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/app_notification_model.dart';
+import 'package:flutter_extension/model/app_notification_model.dart';
+import 'package:flutter_extension/services/api_service.dart';
+import 'package:flutter_extension/util/api_constant.dart';
+import 'package:flutter_extension/views/base/custom_snackbar.dart';
 import 'package:get/get.dart';
 
-/// Pastel accent dots for notification list items.
 abstract final class NotificationAccentColors {
   static const Color lightGreen = Color(0xFFB8E8C4);
   static const Color lightBlue = Color(0xFFA8D4F0);
@@ -12,6 +14,7 @@ abstract final class NotificationAccentColors {
 
 class NotificationsController extends GetxController {
   final List<AppNotificationModel> _items = <AppNotificationModel>[];
+  bool isLoading = false;
 
   List<AppNotificationModel> get notifications =>
       List<AppNotificationModel>.unmodifiable(_items);
@@ -26,42 +29,55 @@ class NotificationsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _items.addAll(_seedNotifications());
+    getNotifications();
   }
 
-  /// Replace with API / repository when available.
-  List<AppNotificationModel> _seedNotifications() {
-    return <AppNotificationModel>[
-      const AppNotificationModel(
-        id: '1',
-        title: 'New Colony Assigned',
-        body: 'You have been assigned to Riverside Gardens.',
-        timeAgo: '5 min ago',
-        accentColor: NotificationAccentColors.lightGreen,
-      ),
-      const AppNotificationModel(
-        id: '2',
-        title: 'Route Updated',
-        body: 'Your route now includes 3 new colony.',
-        timeAgo: '1 hour ago',
-        accentColor: NotificationAccentColors.lightBlue,
-      ),
-      const AppNotificationModel(
-        id: '3',
-        title: 'Visit Reminder',
-        body: 'Don’t forget to mark Green Valley as visited today.',
-        timeAgo: '3 hours ago',
-        accentColor: NotificationAccentColors.mint,
-      ),
-      const AppNotificationModel(
-        id: '4',
-        title: 'Weekly Summary',
-        body: 'You completed 12 visits this week. Great work!',
-        timeAgo: 'Yesterday',
-        accentColor: NotificationAccentColors.paleOlive,
-        isNew: false,
-      ),
-    ];
+  Future<void> getNotifications() async {
+    isLoading = true;
+    update();
+    try {
+      final response = await ApiService().get(
+        ApiConstant.GET_NOTIFICATIONS,
+        authReq: true,
+      );
+      final dynamic rawData = response.data;
+      final List<dynamic> dataList = rawData is Map<String, dynamic>
+          ? (rawData['data'] as List<dynamic>? ?? <dynamic>[])
+          : <dynamic>[];
+
+      _items.clear();
+      for (final dynamic item in dataList) {
+        if (item is! Map<String, dynamic>) continue;
+        final String noteType = (item['note_type'] ?? '').toString();
+        _items.add(
+          AppNotificationModel.fromJson(
+            item,
+            accentColor: _accentColorFromType(noteType),
+          ),
+        );
+      }
+      update();
+    } catch (e) {
+      showCustomSnackBar(e.toString(), getXSnackBar: true);
+    } finally {
+      isLoading = false;
+      update();
+    }
+  }
+
+  Color _accentColorFromType(String noteType) {
+    switch (noteType.toLowerCase()) {
+      case 'success':
+        return NotificationAccentColors.lightGreen;
+      case 'warning':
+        return NotificationAccentColors.paleOlive;
+      case 'error':
+      case 'danger':
+        return const Color(0xFFF3B8B8);
+      case 'info':
+      default:
+        return NotificationAccentColors.lightBlue;
+    }
   }
 
   void dismissNotification(String id) {

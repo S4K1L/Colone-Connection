@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/colony_list_item_model.dart';
+import 'package:flutter_extension/model/colony_list_item_model.dart';
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:get/get.dart';

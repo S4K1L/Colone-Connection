@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
 import 'package:flutter_extension/controller/plan_route_controller.dart';
-import 'package:flutter_extension/data/model/route_stop_model.dart';
+import 'package:flutter_extension/model/route_stop_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/base/route_flow_header.dart';

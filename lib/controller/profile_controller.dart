@@ -1,22 +1,76 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/user_profile_model.dart';
+import 'package:flutter_extension/model/multi_body.dart';
+import 'package:flutter_extension/model/user_profile_model.dart';
+import 'package:flutter_extension/services/api_service.dart';
+import 'package:flutter_extension/services/shared_prefs_service.dart';
+import 'package:flutter_extension/util/api_constant.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
+import 'package:flutter_extension/util/app_constants.dart';
+import 'package:flutter_extension/views/base/custom_snackbar.dart';
 import 'package:flutter_extension/views/screen/profile/policy_and_about.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileController extends GetxController {
-  UserProfileModel profile = const UserProfileModel(
-    displayName: 'John Smith',
-    jobTitle: 'Sales Representative',
-    employeeId: 'EMP-2451',
-    email: 'rajesh.kumar@company.com',
-    phone: '+91 98765 43210',
-    company: 'AquaTech Solutions Pvt. Ltd.',
-    isActive: true,
-  );
+  final ApiService apiService = ApiService();
+  String termsAndPolicies = '';
+  String aboutUs = '';
+  bool isLoading = false;
+  bool isUpdatingProfile = false;
+  File? selectedProfileImage;
+  final ImagePicker _imagePicker = ImagePicker();
+  UserProfileModel profile = UserProfileModel.empty();
 
   bool pushNotificationsEnabled = true;
+
+  @override
+  void onInit() {
+    super.onInit();
+    getProfile();
+  }
+
+  Future<void> getProfile() async {
+    isLoading = true;
+    update();
+    try {
+      final response = await apiService.get(
+        ApiConstant.GET_USER_PROFILE,
+        authReq: true,
+      );
+      final dynamic raw = response.data;
+      if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
+        profile = UserProfileModel.fromJson(raw['data'] as Map<String, dynamic>);
+      } else {
+        profile = UserProfileModel.empty();
+      }
+    } catch (e) {
+      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+    } finally {
+      isLoading = false;
+      update();
+    }
+  }
+
+  Future<void> getTermsAndPolicies(String endPoint) async {
+    isLoading = true;
+    try {
+      final response = await apiService.get(endPoint);
+      if(endPoint == ApiConstant.GET_TERMS_AND_POLICIES){
+        termsAndPolicies = response.data['data'];
+      }else if(endPoint == ApiConstant.GET_ABOUT_US){
+        aboutUs = response.data['data'];
+      }
+    } catch (e) {
+      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+    } finally {
+      isLoading = false;
+      update();
+    }
+  }
 
   void setPushNotifications(bool value) {
     pushNotificationsEnabled = value;
@@ -32,19 +86,79 @@ class ProfileController extends GetxController {
   }
 
   void onTermsAndPolicies() {
-    Get.to(() => const TermsPoliciesScreen(title: 'Terms & Policies'));
+    Get.to(() => const TermsPoliciesScreen(title: 'Terms & Policies',endPoint: ApiConstant.GET_TERMS_AND_POLICIES,));
   }
 
   void onAboutUs() {
-    Get.to(() => const TermsPoliciesScreen(title: 'About Us'));
+    Get.to(() => const TermsPoliciesScreen(title: 'About Us',endPoint: ApiConstant.GET_ABOUT_US));
   }
 
-  void updateProfileName(String fullName) {
-    profile = profile.copyWith(displayName: fullName.trim());
+  Future<void> updateProfileName(String fullName) async {
+    final String trimmedName = fullName.trim();
+    if (trimmedName.isEmpty) {
+      showCustomSnackBar('Full name cannot be empty.', getXSnackBar: true);
+      return;
+    }
+    if (isUpdatingProfile) return;
+
+    isUpdatingProfile = true;
     update();
-    Get.back();
-    Get.snackbar('Profile', 'Profile updated successfully.', snackPosition: SnackPosition.BOTTOM);
+    try {
+      final dio.Response<dynamic> response;
+      if (selectedProfileImage != null) {
+        response = await apiService.patchMultipartData(
+          ApiConstant.UPDATE_USER_PROFILE,
+          <String, dynamic>{
+            'full_name': trimmedName,
+          },
+          multipartBody: <MultipartBody>[
+            MultipartBody(key: 'image', file: selectedProfileImage!),
+          ],
+          authReq: true,
+        );
+      } else {
+        response = await apiService.patch(
+          ApiConstant.UPDATE_USER_PROFILE,
+          <String, dynamic>{
+            'full_name': trimmedName,
+          },
+          authReq: true,
+        );
+      }
+      final dynamic raw = response.data;
+      if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
+        profile = UserProfileModel.fromJson(raw['data'] as Map<String, dynamic>);
+      } else {
+        profile = profile.copyWith(fullName: trimmedName);
+      }
+      selectedProfileImage = null;
+      Future<void>.delayed(const Duration(milliseconds: 120), () {
+        showCustomSnackBar('Profile updated successfully.', getXSnackBar: true,isError: false);
+      });
+      Get.back();
+    } catch (e) {
+      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+    } finally {
+      isUpdatingProfile = false;
+      update();
+    }
   }
+
+  Future<void> pickProfileImage() async {
+    try {
+      final XFile? picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+      selectedProfileImage = File(picked.path);
+      update();
+    } catch (_) {
+      showCustomSnackBar('Could not pick image. Please try again.', getXSnackBar: true);
+    }
+  }
+
+
 
   void updatePassword({
     required String oldPassword,
@@ -84,6 +198,8 @@ class ProfileController extends GetxController {
     );
 
     if (ok == true) {
+      await SharedPrefsService.remove(AppConstants.TOKEN);
+      
       Get.offAllNamed(AppRoutes.loginScreen);
     }
   }

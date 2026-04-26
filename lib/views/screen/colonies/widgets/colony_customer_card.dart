@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/colony_customer_model.dart';
+import 'package:flutter_extension/model/colony_customer_model.dart';
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/util/app_colors.dart';

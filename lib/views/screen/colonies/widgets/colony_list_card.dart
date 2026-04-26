@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/colony_list_item_model.dart';
+import 'package:flutter_extension/model/colony_list_item_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

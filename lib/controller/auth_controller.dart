@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_extension/services/api_service.dart';
+import 'package:flutter_extension/services/shared_prefs_service.dart';
+import 'package:flutter_extension/util/api_constant.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/util/app_constants.dart';
+import 'package:flutter_extension/views/base/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 class AuthController extends GetxController {
+  final ApiService apiService = ApiService();
   static const int otpLength = 6;
-
   final TextEditingController loginEmailController = TextEditingController();
   final TextEditingController loginPasswordController = TextEditingController();
   final TextEditingController signupNameController = TextEditingController();
   final TextEditingController signupEmailController = TextEditingController();
   final TextEditingController signupPhoneController = TextEditingController();
-  final TextEditingController signupPasswordController = TextEditingController();
-  final TextEditingController signupConfirmPasswordController = TextEditingController();
+  final TextEditingController signupPasswordController =
+      TextEditingController();
+  final TextEditingController signupConfirmPasswordController =
+      TextEditingController();
   final TextEditingController forgotEmailController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   final FocusNode otpFocusNode = FocusNode();
 
@@ -44,7 +52,9 @@ class AuthController extends GetxController {
 
   String? loginPasswordValidator(String? value) {
     if (value == null || value.isEmpty) return 'Please enter password';
-    if (value.length < 8) return 'Password must be at least 8 characters';
+
+    ///TODO:need to change the length to 8
+    if (value.length < 4) return 'Password must be at least 8 characters';
     return null;
   }
 
@@ -61,10 +71,13 @@ class AuthController extends GetxController {
   }
 
   bool get hasMinLength => newPasswordController.text.length >= 8;
-  bool get hasUpperCase => RegExp(r'[A-Z]').hasMatch(newPasswordController.text);
-  bool get hasLowerCase => RegExp(r'[a-z]').hasMatch(newPasswordController.text);
+  bool get hasUpperCase =>
+      RegExp(r'[A-Z]').hasMatch(newPasswordController.text);
+  bool get hasLowerCase =>
+      RegExp(r'[a-z]').hasMatch(newPasswordController.text);
   bool get hasNumber => RegExp(r'\d').hasMatch(newPasswordController.text);
-  bool get hasSpecial => RegExp(r'[@$!%*?&]').hasMatch(newPasswordController.text);
+  bool get hasSpecial =>
+      RegExp(r'[@$!%*?&]').hasMatch(newPasswordController.text);
 
   int get strengthScore {
     int score = 0;
@@ -96,11 +109,32 @@ class AuthController extends GetxController {
 
   Future<void> login() async {
     loginLoading = true;
-    // update();
-    // await Future<void>.delayed(const Duration(seconds: 2));
-    // loginLoading = false;
-    // update();
-    Get.offAllNamed(AppRoutes.homeScreen);
+    update();
+    try {
+      final response = await apiService.post(ApiConstant.LOGIN_URL, {
+        'email': loginEmailController.text.trim(),
+        'password': loginPasswordController.text.trim(),
+      });
+      SharedPrefsService.set(
+        AppConstants.TOKEN,
+        response.data['data']['access'],
+      );
+      Get.offAllNamed(AppRoutes.homeScreen);
+    } on DioException catch (e) {
+      final Object? err = e.error;
+      final String message = err is ApiException
+          ? err.message
+          : (e.message ?? 'Login failed. Please try again.');
+      showCustomSnackBar(message, getXSnackBar: true);
+    } catch (_) {
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
+    } finally {
+      loginLoading = false;
+      update();
+    }
   }
 
   String? fullNameValidator(String? value) {
@@ -110,7 +144,8 @@ class AuthController extends GetxController {
   }
 
   String? phoneValidator(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Please enter phone number';
+    if (value == null || value.trim().isEmpty)
+      return 'Please enter phone number';
     final String digits = value.replaceAll(RegExp(r'[^0-9]'), '');
     if (digits.length < 8) return 'Please enter a valid phone number';
     return null;
@@ -142,14 +177,30 @@ class AuthController extends GetxController {
   Future<void> sendOtp() async {
     forgotLoading = true;
     update();
-    await Future<void>.delayed(const Duration(seconds: 2));
-    forgotLoading = false;
-    maskedEmail = _maskEmail(forgotEmailController.text.trim());
-    update();
-    Get.toNamed(
-      AppRoutes.otpVerificationScreen,
-      arguments: <String, String>{'maskedEmail': maskedEmail},
-    );
+    try {
+      await apiService.post(ApiConstant.FORGOT_PASSWORD, {
+        'email': forgotEmailController.text.trim(),
+      });
+      maskedEmail = _maskEmail(forgotEmailController.text.trim());
+      Get.toNamed(
+        AppRoutes.otpVerificationScreen,
+        arguments: <String, String>{'maskedEmail': maskedEmail},
+      );
+    } on DioException catch (e) {
+      final Object? err = e.error;
+      final String message = err is ApiException
+          ? err.message
+          : (e.message ?? 'Forgot password failed. Please try again.');
+      showCustomSnackBar(message, getXSnackBar: true);
+    } catch (_) {
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
+    } finally {
+      forgotLoading = false;
+      update();
+    }
   }
 
   Future<void> tryReadClipboardOtp() async {
@@ -187,20 +238,50 @@ class AuthController extends GetxController {
     otpSubmitted = true;
     otpLoading = true;
     update();
-    await Future<void>.delayed(const Duration(seconds: 2));
-    otpLoading = false;
-    update();
-    Get.toNamed(AppRoutes.resetPasswordScreen);
-    if (!autoTriggered) return;
+    try {
+      final response = await apiService.post(ApiConstant.VERIFY_OTP, {
+        'email': forgotEmailController.text.trim(),
+        'otp': otpController.text.trim(),
+      });
+      SharedPrefsService.set(AppConstants.TOKEN, response.data['data']['access']);
+      Get.toNamed(AppRoutes.resetPasswordScreen);
+    } on DioException catch (e) {
+      final Object? err = e.error;
+      final String message = err is ApiException
+          ? err.message
+          : (e.message ?? 'OTP verification failed. Please try again.');
+      showCustomSnackBar(message, getXSnackBar: true);
+    } catch (_) {
+      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+    } finally {
+      otpLoading = false;
+      update();
+    }
   }
 
   Future<void> resetPassword() async {
     resetLoading = true;
-    update();
-    await Future<void>.delayed(const Duration(seconds: 2));
-    resetLoading = false;
-    update();
-    Get.offNamed(AppRoutes.passwordUpdatedScreen);
+    try {
+      await apiService.post(ApiConstant.RESET_PASSWORD, {
+        'new_password': confirmPasswordController.text.trim(),
+      },
+      authReq: true,
+      );
+      await SharedPrefsService.remove(AppConstants.TOKEN);
+      showCustomSnackBar('Password reset successfully. Please login again.', getXSnackBar: true,isError: false);
+      Get.offNamed(AppRoutes.loginScreen);
+    } on DioException catch (e) {
+      final Object? err = e.error;
+      final String message = err is ApiException
+          ? err.message
+          : (e.message ?? 'Reset password failed. Please try again.');
+      showCustomSnackBar(message, getXSnackBar: true);
+    } catch (_) {
+      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+    } finally {
+      resetLoading = false;
+      update();
+    }
   }
 
   String _maskEmail(String email) {

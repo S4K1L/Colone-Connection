@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/notifications_controller.dart';
-import 'package:flutter_extension/data/model/app_notification_model.dart';
+import 'package:flutter_extension/model/app_notification_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/base/notification_tile.dart';
@@ -105,7 +105,13 @@ class _NotificationsBody extends StatelessWidget {
                 ),
               ],
             ),
-            child: controller.hasNotifications
+            child: controller.isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.green500,
+                    ),
+                  )
+                : controller.hasNotifications
                 ? ListView.builder(
                     padding: EdgeInsets.fromLTRB(
                       16.w,
@@ -119,7 +125,7 @@ class _NotificationsBody extends StatelessWidget {
                           controller.notifications[index];
                       return NotificationTile(
                         title: n.title,
-                        body: n.body,
+                        body: n.content,
                         timeAgo: n.timeAgo,
                         accentColor: n.accentColor,
                         onDismiss: () => controller.dismissNotification(n.id),

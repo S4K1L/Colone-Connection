@@ -5,8 +5,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_extension/data/model/map_point_model.dart';
-import 'package:flutter_extension/data/model/map_search_models.dart';
+import 'package:flutter_extension/model/map_point_model.dart';
+import 'package:flutter_extension/model/map_search_models.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/search_filter_chips_row.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';

@@ -15,7 +15,13 @@ class ProfileScreen extends StatelessWidget {
           backgroundColor: AppColors.green25,
           body: SafeArea(
             bottom: false,
-            child: ProfileBody(controller: c),
+            child: c.isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.green500,
+                    ),
+                  )
+                : ProfileBody(controller: c),
           ),
         );
       },

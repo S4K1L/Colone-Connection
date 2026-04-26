@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/profile_controller.dart';
+import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_primary_button.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
@@ -16,6 +19,8 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _fullNameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
 
   static const String _avatarAsset = 'assets/images/placeholder.jpg';
 
@@ -23,12 +28,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     final ProfileController c = Get.find<ProfileController>();
-    _fullNameController = TextEditingController(text: c.profile.displayName);
+    _fullNameController = TextEditingController(text: c.profile.fullName);
+    _emailController = TextEditingController(text: c.profile.email);
+    _phoneController = TextEditingController(text: c.profile.phone);
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -83,36 +92,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     ),
                                     padding: EdgeInsets.all(6.w),
                                     child: ClipOval(
-                                      child: Image.asset(
-                                        _avatarAsset,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (BuildContext context, Object _, __) {
-                                          return Container(
-                                            color: const Color(0xFFE6F7FF),
-                                            child: const Icon(
-                                              Icons.person_rounded,
-                                              color: Color(0xFF2D9CDB),
-                                            ),
-                                          );
-                                        },
-                                      ),
+                                      child: _buildProfileAvatar(c),
                                     ),
                                   ),
                                   Positioned(
                                     bottom: 8.h,
                                     right: 8.w,
-                                    child: Container(
-                                      width: 30.w,
-                                      height: 30.w,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF2D9CDB),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.camera_alt_rounded,
-                                        size: 18,
-                                        color: AppColors.white,
+                                    child: GestureDetector(
+                                      onTap: c.pickProfileImage,
+                                      child: Container(
+                                        width: 30.w,
+                                        height: 30.w,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF2D9CDB),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.camera_alt_rounded,
+                                          size: 18,
+                                          color: AppColors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -132,14 +131,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             controller: _fullNameController,
                             keyboardType: TextInputType.name,
                           ),
+                          SizedBox(height: 14.h),
+                          const AppText.rg(
+                            'Email',
+                            fontSize: 13,
+                            color: AppColors.grey400,
+                            useResponsiveSize: true,
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            readOnly: true,
+                          ),
+                          SizedBox(height: 14.h),
+                          const AppText.rg(
+                            'Phone',
+                            fontSize: 13,
+                            color: AppColors.grey400,
+                            useResponsiveSize: true,
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            readOnly: true,
+                          ),
                           const Spacer(),
                           AppPrimaryButton(
                             title: 'Save Now',
                             height: 48,
                             borderRadius: 14,
-                            onPressed: () {
-                              c.updateProfileName(_fullNameController.text);
-                            },
+                            isLoading: c.isUpdatingProfile,
+                            onPressed: c.isUpdatingProfile
+                                ? null
+                                : () => c.updateProfileName(_fullNameController.text),
                           ),
                         ],
                       ),
@@ -157,6 +183,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildField({
     required TextEditingController controller,
     required TextInputType keyboardType,
+    bool readOnly = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -175,6 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         height: 54.h,
         child: TextFormField(
           controller: controller,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           cursorColor: AppColors.green500,
           style: TextStyle(color: AppColors.grey300, fontSize: 15.sp),
@@ -188,6 +216,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(ProfileController c) {
+    if (c.selectedProfileImage != null) {
+      return Image.file(
+        File(c.selectedProfileImage!.path),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _avatarFallback(),
+      );
+    }
+
+    final String? networkImage = ApiService.getImgUrl(c.profile.image);
+    if (networkImage != null && networkImage.isNotEmpty) {
+      return Image.network(
+        networkImage,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _avatarFallback(),
+      );
+    }
+
+    return Image.asset(
+      _avatarAsset,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _avatarFallback(),
+    );
+  }
+
+  Widget _avatarFallback() {
+    return Container(
+      color: const Color(0xFFE6F7FF),
+      child: const Icon(
+        Icons.person_rounded,
+        color: Color(0xFF2D9CDB),
       ),
     );
   }

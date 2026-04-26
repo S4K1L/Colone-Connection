@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_extension/controller/profile_controller.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/base/route_flow_header.dart';
@@ -15,6 +16,17 @@ class TermsPoliciesScreen extends StatefulWidget {
 }
 
 class _TermsPoliciesScreenState extends State<TermsPoliciesScreen> {
+  final ProfileController profileController = Get.find<ProfileController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.endPoint != null) {
+      profileController.getTermsAndPolicies(widget.endPoint!);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

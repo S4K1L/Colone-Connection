@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/profile_controller.dart';
-import 'package:flutter_extension/data/model/user_profile_model.dart';
+import 'package:flutter_extension/model/user_profile_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/util/app_svg_paths.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
@@ -131,6 +131,7 @@ class ProfileBody extends StatelessWidget {
                     background: false,
                   ),
                   SettingsNavRow(
+                    
                     svgPath: AppSvgPaths.logout,
                     label: 'Log Out',
                     onTap: controller.onLogOut,

@@ -100,22 +100,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       authController.login();
                     },
                   ),
-                  SizedBox(height: 14.h),
-                  GestureDetector(
-                    onTap: () => Get.toNamed(AppRoutes.createAccountScreen),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        AppText.rg(
-                          "Don't have an account? ",
-                          fontSize: 14,
-                          color: AppColors.grey200,
-                        ),
-                        AppText.md('Sign Up', fontSize: 14, color: AppColors.green600),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
+                  // SizedBox(height: 14.h),
+                  // GestureDetector(
+                  //   onTap: () => Get.toNamed(AppRoutes.createAccountScreen),
+                  //   child: const Row(
+                  //     mainAxisAlignment: MainAxisAlignment.center,
+                  //     children: <Widget>[
+                  //       AppText.rg(
+                  //         "Don't have an account? ",
+                  //         fontSize: 14,
+                  //         color: AppColors.grey200,
+                  //       ),
+                  //       AppText.md('Sign Up', fontSize: 14, color: AppColors.green600),
+                  //     ],
+                  //   ),
+                  // ),
+                  // SizedBox(height: 24.h),
                 ],
               ),
             ),

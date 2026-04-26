@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/data/model/user_profile_model.dart';
+import 'package:flutter_extension/model/user_profile_model.dart';
+import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/util/app_svg_paths.dart';
 import 'package:flutter_extension/views/base/app_svg_icon.dart';
@@ -19,6 +20,17 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String imageUrl = ApiService.getImgUrl(profile.image) ?? '';
+    final bool hasImage = imageUrl.isNotEmpty;
+    final String name = profile.fullName.isNotEmpty ? profile.fullName : 'Unknown User';
+    final String jobTitle = profile.profile.jobTitle.isNotEmpty
+        ? profile.profile.jobTitle
+        : 'Not specified';
+    final String company = profile.profile.company.isNotEmpty
+        ? profile.profile.company
+        : 'Not specified';
+    final String location = _buildLocation(profile.profile.city, profile.profile.country);
+
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
@@ -48,14 +60,29 @@ class ProfileCard extends StatelessWidget {
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AppSvgIcon(
-                    AppSvgPaths.profile,
-                    size: 34.w,
-                    color: AppColors.white,
-                  ),
-                ),
+                child: hasImage
+                    ? ClipOval(
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: AppSvgIcon(
+                              AppSvgPaths.profile,
+                              size: 34.w,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: AppSvgIcon(
+                          AppSvgPaths.profile,
+                          size: 34.w,
+                          color: AppColors.white,
+                        ),
+                      ),
               ),
               SizedBox(width: 14.w),
               Expanded(
@@ -67,7 +94,7 @@ class ProfileCard extends StatelessWidget {
                       children: <Widget>[
                         Expanded(
                           child: AppText.smd(
-                            profile.displayName,
+                            name,
                             fontSize: 18,
                             color: AppColors.grey500,
                             useResponsiveSize: true,
@@ -94,7 +121,7 @@ class ProfileCard extends StatelessWidget {
                     ),
                     SizedBox(height: 6.h),
                     AppText.rg(
-                      profile.jobTitle,
+                      jobTitle,
                       fontSize: 14,
                       color: AppColors.grey300,
                       useResponsiveSize: true,
@@ -110,7 +137,7 @@ class ProfileCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: AppText.rg(
-                        'ID: ${profile.employeeId}',
+                        'ID: ${profile.id}',
                         fontSize: 12,
                         color: AppColors.grey400,
                         useResponsiveSize: true,
@@ -137,7 +164,7 @@ class ProfileCard extends StatelessWidget {
           SizedBox(height: 12.h),
           ProfileContactLine(
             svgPath: AppSvgPaths.colony,
-            text: profile.company,
+            text: '$company${location.isNotEmpty ? ' • $location' : ''}',
           ),
           SizedBox(height: 18.h),
           Material(
@@ -162,5 +189,14 @@ class ProfileCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _buildLocation(String city, String country) {
+    final String cityText = city.trim();
+    final String countryText = country.trim();
+    if (cityText.isEmpty && countryText.isEmpty) return '';
+    if (cityText.isEmpty) return countryText;
+    if (countryText.isEmpty) return cityText;
+    return '$cityText, $countryText';
   }
 }
