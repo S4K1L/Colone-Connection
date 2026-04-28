@@ -98,6 +98,7 @@ class ProfileBody extends StatelessWidget {
                     onEditProfile: controller.onEditProfile,
                   ),
                   SizedBox(height: 22.h),
+                  //TODO: add push notifications on/off by restapi
                   SettingsToggleRow(
                     svgPath: AppSvgPaths.alert,
                     label: 'Push Notifications',
@@ -109,11 +110,13 @@ class ProfileBody extends StatelessWidget {
                     label: 'Change Password',
                     onTap: controller.onChangePassword,
                   ),
+                  //TODO: add terms and policies and about us
                   SettingsNavRow(
                     svgPath: AppSvgPaths.success,
                     label: 'Terms & Policies',
                     onTap: controller.onTermsAndPolicies,
                   ),
+                  //TODO: add terms and policies and about us
                   SettingsNavRow(
                     label: 'About Us',
                     onTap: controller.onAboutUs,
@@ -123,6 +126,7 @@ class ProfileBody extends StatelessWidget {
                       background: false,
                     ),
                   ),
+                  //TODO: add delete account by restapi
                   SettingsNavRow(
                     svgPath: AppSvgPaths.delete,
                     label: 'Delete Account',

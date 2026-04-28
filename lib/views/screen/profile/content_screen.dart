@@ -6,16 +6,16 @@ import 'package:flutter_extension/views/base/route_flow_header.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-class TermsPoliciesScreen extends StatefulWidget {
+class ContentScreen extends StatefulWidget {
   final String? title;
   final String? endPoint;
-  const TermsPoliciesScreen({super.key, this.title, this.endPoint});
+  const ContentScreen({super.key, this.title, this.endPoint});
 
   @override
-  State<TermsPoliciesScreen> createState() => _TermsPoliciesScreenState();
+  State<ContentScreen> createState() => _ContentScreenState();
 }
 
-class _TermsPoliciesScreenState extends State<TermsPoliciesScreen> {
+class _ContentScreenState extends State<ContentScreen> {
   final ProfileController profileController = Get.find<ProfileController>();
 
   @override

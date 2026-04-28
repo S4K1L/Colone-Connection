@@ -11,7 +11,7 @@ import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/util/app_constants.dart';
 import 'package:flutter_extension/views/base/custom_snackbar.dart';
-import 'package:flutter_extension/views/screen/profile/policy_and_about.dart';
+import 'package:flutter_extension/views/screen/profile/content_screen.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -86,11 +86,11 @@ class ProfileController extends GetxController {
   }
 
   void onTermsAndPolicies() {
-    Get.to(() => const TermsPoliciesScreen(title: 'Terms & Policies',endPoint: ApiConstant.GET_TERMS_AND_POLICIES,));
+    Get.to(() => const ContentScreen(title: 'Terms & Policies',endPoint: ApiConstant.GET_TERMS_AND_POLICIES,));
   }
 
   void onAboutUs() {
-    Get.to(() => const TermsPoliciesScreen(title: 'About Us',endPoint: ApiConstant.GET_ABOUT_US));
+    Get.to(() => const ContentScreen(title: 'About Us',endPoint: ApiConstant.GET_ABOUT_US));
   }
 
   Future<void> updateProfileName(String fullName) async {
@@ -159,28 +159,38 @@ class ProfileController extends GetxController {
   }
 
 
-
-  void updatePassword({
-    required String oldPassword,
-    required String newPassword,
-    required String confirmPassword,
-  }) {
-    // Demo-level validation: replace with backend/API later.
+Future<void> updatePassword({
+  required String oldPassword,
+  required String newPassword,
+  required String confirmPassword,
+}) async {
+  isLoading = true;
+  update();
+  try{
     if (oldPassword.trim().isEmpty ||
         newPassword.trim().isEmpty ||
         confirmPassword.trim().isEmpty) {
-      Get.snackbar('Password', 'Please fill all fields.', snackPosition: SnackPosition.BOTTOM);
+      showCustomSnackBar('Please fill all fields.', getXSnackBar: true);
       return;
     }
     if (newPassword != confirmPassword) {
-      Get.snackbar('Password', 'New and confirm passwords do not match.',
-          snackPosition: SnackPosition.BOTTOM);
+      showCustomSnackBar('New and confirm passwords do not match.', getXSnackBar: true);
       return;
     }
-
+    await apiService.post(ApiConstant.CHANGE_PASSWORD, {
+      'old_password': oldPassword,
+      'new_password': newPassword,
+    },authReq: true);
+  }catch(e){
+    showCustomSnackBar("Something went wrong. Please try again.", getXSnackBar: true);
+  }finally{
+    isLoading = false;
+    update();
     Get.back();
-    Get.snackbar('Password', 'Password updated successfully.', snackPosition: SnackPosition.BOTTOM);
+    showCustomSnackBar('Password updated successfully.', getXSnackBar: true,isError: false);
   }
+}
+
 
   Future<void> onDeleteAccount() async {
     final bool? ok = await _showFullWidthBottomConfirm(

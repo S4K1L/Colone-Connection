@@ -20,8 +20,11 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String imageUrl = ApiService.getImgUrl(profile.image) ?? '';
-    final bool hasImage = imageUrl.isNotEmpty;
+    final String rawImage = profile.image.trim();
+    final String imageUrl = rawImage.startsWith('http')
+        ? rawImage
+        : (ApiService.getImgUrl(rawImage) ?? '');
+    final bool hasImage = rawImage.isNotEmpty;
     final String name = profile.fullName.isNotEmpty ? profile.fullName : 'Unknown User';
     final String jobTitle = profile.profile.jobTitle.isNotEmpty
         ? profile.profile.jobTitle

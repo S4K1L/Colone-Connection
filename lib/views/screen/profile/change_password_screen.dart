@@ -131,6 +131,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           const Spacer(),
                           AppPrimaryButton(
                             title: 'Save Now',
+                            isLoading: c.isLoading,
                             onPressed: () {
                               c.updatePassword(
                                 oldPassword: _oldPasswordController.text,
@@ -139,7 +140,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     _confirmPasswordController.text,
                               );
                             },
-                          ),
+                          )
                         ],
                       ),
                     ),
