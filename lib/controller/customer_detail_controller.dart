@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
+import 'package:flutter_extension/model/sales_team_report_details_model.dart';
 import 'package:get/get.dart';
 
 class CustomerNoteEntry {
@@ -85,23 +86,7 @@ class CustomerDetailController extends GetxController {
   final TextEditingController mNextCtrl = TextEditingController();
   final TextEditingController mNoteCtrl = TextEditingController();
 
-  final List<VisitHistoryEntry> visits = <VisitHistoryEntry>[
-    const VisitHistoryEntry(
-      dateLabel: '5 March, 2026',
-      summary: 'Routine visit — stock check completed',
-      status: 'Visited',
-    ),
-    const VisitHistoryEntry(
-      dateLabel: '12 Feb, 2026',
-      summary: 'Follow-up on machinery order',
-      status: 'Visited',
-    ),
-    const VisitHistoryEntry(
-      dateLabel: '28 Jan, 2026',
-      summary: 'Missed appointment',
-      status: 'No show',
-    ),
-  ];
+  final List<VisitHistoryEntry> visits = <VisitHistoryEntry>[];
 
   static const List<String> machineryTypeOptions = <String>[
     'CNC',
@@ -123,34 +108,171 @@ class CustomerDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    emailCtrl = TextEditingController(text: args.email);
-    phoneCtrl = TextEditingController(text: args.phone);
-    notes.addAll(<CustomerNoteEntry>[
-      CustomerNoteEntry(
-        id: 'n1',
-        text: 'Customer prefers morning visits.',
-        dateLabel: '02 Feb, 2025',
+    final SalesTeamReportCustomerModel? primaryCustomer = _primaryCustomer();
+    emailCtrl = TextEditingController(
+      text: primaryCustomer?.email?.trim().isNotEmpty == true
+          ? primaryCustomer!.email!
+          : args.email,
+    );
+    phoneCtrl = TextEditingController(
+      text: primaryCustomer?.phone?.trim().isNotEmpty == true
+          ? primaryCustomer!.phone!
+          : args.phone,
+    );
+
+    _seedReportBasedNotesAndVisits();
+
+    if (args.reportDetails == null) {
+      machinery.addAll(<CustomerMachineryEntry>[
+        CustomerMachineryEntry(
+          id: 'mac1',
+          title: 'CNC Machine X200',
+          subtitle: 'Model X200-PRO · Serial SN-88921',
+          note: 'Running well after last service.',
+        ),
+        CustomerMachineryEntry(
+          id: 'mac2',
+          title: 'CNC Machine X200',
+          subtitle: 'Model X200-PRO · Backup unit',
+          note: 'Scheduled for belt inspection next month.',
+        ),
+      ]);
+    } else {
+      _seedMachineryFromReport();
+    }
+
+    // For API-driven detail screens with no machinery records, keep add form open
+    // so users see an actionable form instead of an empty area.
+    if (machinery.isEmpty) {
+      addMachineryExpanded = true;
+    }
+  }
+
+  SalesTeamReportCustomerModel? _primaryCustomer() {
+    final report = args.reportDetails;
+    final List<SalesTeamReportCustomerModel> pending =
+        report?.pendingCustomers ?? <SalesTeamReportCustomerModel>[];
+    final List<SalesTeamReportCustomerModel> completed =
+        report?.completedCustomers ?? <SalesTeamReportCustomerModel>[];
+    if (pending.isNotEmpty) return pending.first;
+    if (completed.isNotEmpty) return completed.first;
+    return null;
+  }
+
+  void _seedReportBasedNotesAndVisits() {
+    final report = args.reportDetails;
+    if (report == null) {
+      notes.addAll(<CustomerNoteEntry>[
+        CustomerNoteEntry(
+          id: 'n1',
+          text: 'Customer prefers morning visits.',
+          dateLabel: '02 Feb, 2025',
+        ),
+        CustomerNoteEntry(
+          id: 'n2',
+          text: 'Follow up on spare parts order.',
+          dateLabel: '15 Jan, 2025',
+        ),
+      ]);
+      visits.addAll(<VisitHistoryEntry>[
+        const VisitHistoryEntry(
+          dateLabel: '5 March, 2026',
+          summary: 'Routine visit — stock check completed',
+          status: 'Visited',
+        ),
+        const VisitHistoryEntry(
+          dateLabel: '12 Feb, 2026',
+          summary: 'Follow-up on machinery order',
+          status: 'Visited',
+        ),
+        const VisitHistoryEntry(
+          dateLabel: '28 Jan, 2026',
+          summary: 'Missed appointment',
+          status: 'No show',
+        ),
+      ]);
+      return;
+    }
+
+    final List<SalesTeamReportCustomerModel> allCustomers =
+        <SalesTeamReportCustomerModel>[
+      ...?report.pendingCustomers,
+      ...?report.completedCustomers,
+    ];
+    for (int i = 0; i < allCustomers.length; i++) {
+      final SalesTeamReportCustomerModel c = allCustomers[i];
+      final String owner = (c.ownerName ?? '').trim();
+      final String company = (c.companyName ?? '').trim();
+      final String city = (c.city ?? '').trim();
+      final String state = (c.state ?? '').trim();
+      final String country = (c.country ?? '').trim();
+
+      notes.add(
+        CustomerNoteEntry(
+          id: 'n_api_${c.id ?? i}',
+          text:
+              '${owner.isEmpty ? "Customer" : owner} · ${company.isEmpty ? "-" : company}\n'
+              'Status: ${c.status ?? "-"}\n'
+              'Location: ${city.isEmpty ? "-" : city}, ${state.isEmpty ? "-" : state}, ${country.isEmpty ? "-" : country}',
+          dateLabel: report.date ?? 'N/A',
+        ),
+      );
+    }
+    if (notes.isEmpty) {
+      notes.add(
+        CustomerNoteEntry(
+          id: 'n_api_empty',
+          text: 'No customer records found in this report.',
+          dateLabel: report.date ?? 'N/A',
+        ),
+      );
+    }
+
+    visits.add(
+      VisitHistoryEntry(
+        dateLabel: report.date ?? 'N/A',
+        summary:
+            'Pending: ${report.pendingCount ?? 0}, Completed: ${report.completedCount ?? 0}, Total: ${report.totalCustomers ?? 0}',
+        status: (report.isVisited ?? false) ? 'Visited' : 'Not Visited',
       ),
-      CustomerNoteEntry(
-        id: 'n2',
-        text: 'Follow up on spare parts order.',
-        dateLabel: '15 Jan, 2025',
-      ),
-    ]);
-    machinery.addAll(<CustomerMachineryEntry>[
-      CustomerMachineryEntry(
-        id: 'mac1',
-        title: 'CNC Machine X200',
-        subtitle: 'Model X200-PRO · Serial SN-88921',
-        note: 'Running well after last service.',
-      ),
-      CustomerMachineryEntry(
-        id: 'mac2',
-        title: 'CNC Machine X200',
-        subtitle: 'Model X200-PRO · Backup unit',
-        note: 'Scheduled for belt inspection next month.',
-      ),
-    ]);
+    );
+  }
+
+  void _seedMachineryFromReport() {
+    final report = args.reportDetails;
+    if (report == null) return;
+
+    final List<SalesTeamReportCustomerModel> allCustomers =
+        <SalesTeamReportCustomerModel>[
+      ...?report.pendingCustomers,
+      ...?report.completedCustomers,
+    ];
+
+    if (allCustomers.isEmpty) return;
+
+    for (int i = 0; i < allCustomers.length; i++) {
+      final SalesTeamReportCustomerModel customer = allCustomers[i];
+      final String owner = (customer.ownerName ?? '').trim();
+      final String company = (customer.companyName ?? '').trim();
+      final String serialBase = customer.id?.toString() ?? '${i + 1}';
+
+      machinery.add(
+        CustomerMachineryEntry(
+          id: 'mac_api_$serialBase',
+          title: 'CNC Machine X200',
+          subtitle: 'Model: X200-2023',
+          note:
+              'Customer: ${owner.isEmpty ? '-' : owner}. ${company.isEmpty ? '' : 'Company: $company.'}',
+          type: 'CNC',
+          brand: company.isEmpty ? 'Select Brand' : company,
+          model: 'X200',
+          purchaseYear: '2010',
+          condition: 'Good',
+          serial: 'SN-$serialBase',
+          nextService: '25 February',
+        ),
+      );
+    }
   }
 
   @override
@@ -172,6 +294,9 @@ class CustomerDetailController extends GetxController {
 
   void setTab(int index) {
     tabIndex = index;
+    if (tabIndex == 2 && machinery.isEmpty) {
+      addMachineryExpanded = true;
+    }
     update();
   }
 

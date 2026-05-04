@@ -320,11 +320,67 @@ class _MachineryTab extends StatelessWidget {
             if (c.editingMachineryId == m.id)
               Padding(
                 padding: EdgeInsets.only(bottom: 14.h),
-                child: _MachineryForm(
-                  c: c,
-                  title: 'Edit machinery',
-                  onSave: () => c.saveMachineryForm(),
-                  onCancel: () => c.cancelMachineryForm(),
+                child: Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: _noteTint,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: AppColors.grey100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                AppText.smd(
+                                  m.title,
+                                  fontSize: 15,
+                                  color: AppColors.grey500,
+                                  useResponsiveSize: true,
+                                ),
+                                SizedBox(height: 4.h),
+                                AppText.rg(
+                                  m.subtitle,
+                                  fontSize: 12,
+                                  color: AppColors.grey300,
+                                  useResponsiveSize: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => c.deleteMachinery(m.id),
+                            icon: Icon(
+                              Icons.delete_outline_rounded,
+                              size: 20.sp,
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => c.saveMachineryForm(),
+                            icon: Icon(
+                              Icons.check_rounded,
+                              size: 20.sp,
+                              color: AppColors.green600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      _MachineryForm(
+                        c: c,
+                        title: '',
+                        onSave: () => c.saveMachineryForm(),
+                        onCancel: () => c.cancelMachineryForm(),
+                        isEditing: true,
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -413,6 +469,7 @@ class _MachineryTab extends StatelessWidget {
                 c.setAddMachineryExpanded(false);
                 c.cancelMachineryForm();
               },
+              isEditing: false,
             ),
           ],
         ],
@@ -427,79 +484,104 @@ class _MachineryForm extends StatelessWidget {
     required this.title,
     required this.onSave,
     required this.onCancel,
+    this.isEditing = false,
   });
 
   final CustomerDetailController c;
   final String title;
   final VoidCallback onSave;
   final VoidCallback onCancel;
+  final bool isEditing;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        AppText.smd(
-          title,
-          fontSize: 14,
-          color: AppColors.grey400,
-          useResponsiveSize: true,
+        if (title.isNotEmpty) ...<Widget>[
+          AppText.smd(
+            title,
+            fontSize: 14,
+            color: AppColors.grey400,
+            useResponsiveSize: true,
+          ),
+          SizedBox(height: 10.h),
+        ],
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _LabeledField(label: 'Type', child: _machineryDropdown(
+                context,
+                value: c.mTypeCtrl.text.isEmpty ? null : c.mTypeCtrl.text,
+                items: CustomerDetailController.machineryTypeOptions,
+                hint: 'Select Type',
+                onChanged: (String? v) {
+                  c.mTypeCtrl.text = v ?? '';
+                  c.update();
+                },
+              )),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: _LabeledField(label: 'Brand', child: _machineryDropdown(
+                context,
+                value: c.mBrandCtrl.text.isEmpty ? null : c.mBrandCtrl.text,
+                items: CustomerDetailController.machineryBrandOptions,
+                hint: 'Select Brand',
+                onChanged: (String? v) {
+                  c.mBrandCtrl.text = v ?? '';
+                  c.update();
+                },
+              )),
+            ),
+          ],
         ),
-        SizedBox(height: 10.h),
-        _LabeledField(label: 'Type', child: _machineryDropdown(
-          context,
-          value: c.mTypeCtrl.text.isEmpty ? null : c.mTypeCtrl.text,
-          items: CustomerDetailController.machineryTypeOptions,
-          onChanged: (String? v) {
-            c.mTypeCtrl.text = v ?? '';
-            c.update();
-          },
-        )),
-        _LabeledField(label: 'Brand', child: _machineryDropdown(
-          context,
-          value: c.mBrandCtrl.text.isEmpty ? null : c.mBrandCtrl.text,
-          items: CustomerDetailController.machineryBrandOptions,
-          onChanged: (String? v) {
-            c.mBrandCtrl.text = v ?? '';
-            c.update();
-          },
-        )),
         _LabeledField(
           label: 'Model',
           child: TextField(
             controller: c.mModelCtrl,
-            decoration: _fieldDeco('Model'),
+            decoration: _fieldDeco('Select Type'),
           ),
         ),
-        _LabeledField(
-          label: 'Purchase Year',
-          child: TextField(
-            controller: c.mYearCtrl,
-            keyboardType: TextInputType.number,
-            decoration: _fieldDeco('e.g. 2022'),
-          ),
-        ),
-        _LabeledField(label: 'Condition', child: _machineryDropdown(
-          context,
-          value: c.mConditionCtrl.text.isEmpty ? null : c.mConditionCtrl.text,
-          items: CustomerDetailController.conditionOptions,
-          onChanged: (String? v) {
-            c.mConditionCtrl.text = v ?? '';
-            c.update();
-          },
-        )),
         _LabeledField(
           label: 'Serial Number',
           child: TextField(
             controller: c.mSerialCtrl,
-            decoration: _fieldDeco('Serial number'),
+            decoration: _fieldDeco('e.g. 575 DI'),
           ),
+        ),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _LabeledField(
+                label: 'Purchase Year',
+                child: TextField(
+                  controller: c.mYearCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: _fieldDeco('Select Year'),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: _LabeledField(label: 'Condition', child: _machineryDropdown(
+                context,
+                value: c.mConditionCtrl.text.isEmpty ? null : c.mConditionCtrl.text,
+                items: CustomerDetailController.conditionOptions,
+                hint: 'Good',
+                onChanged: (String? v) {
+                  c.mConditionCtrl.text = v ?? '';
+                  c.update();
+                },
+              )),
+            ),
+          ],
         ),
         _LabeledField(
           label: 'Next Service',
           child: TextField(
             controller: c.mNextCtrl,
-            decoration: _fieldDeco('e.g. 12 Apr, 2026'),
+            decoration: _fieldDeco('Select Date'),
           ),
         ),
         _LabeledField(
@@ -507,16 +589,16 @@ class _MachineryForm extends StatelessWidget {
           child: TextField(
             controller: c.mNoteCtrl,
             maxLines: 3,
-            decoration: _fieldDeco('Note'),
+            decoration: _fieldDeco('Write here....'),
           ),
         ),
-        SizedBox(height: 8.h),
-        Row(
-          children: <Widget>[
-            TextButton(onPressed: onCancel, child: const Text('Cancel')),
-            const Spacer(),
-          ],
-        ),
+        if (!isEditing) ...<Widget>[
+          SizedBox(height: 2.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(onPressed: onCancel, child: const Text('Cancel')),
+          ),
+        ],
         _GreenActionButton(label: 'Save Now', onTap: onSave),
       ],
     );
@@ -542,12 +624,15 @@ class _MachineryForm extends StatelessWidget {
     BuildContext context, {
     required String? value,
     required List<String> items,
+    required String hint,
     required ValueChanged<String?> onChanged,
   }) {
     final String? v = value != null && items.contains(value) ? value : null;
     return DropdownButtonFormField<String>(
       initialValue: v,
       decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: AppColors.grey300, fontSize: 13.sp),
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),

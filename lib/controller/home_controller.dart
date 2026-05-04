@@ -7,8 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/model/map_point_model.dart';
 import 'package:flutter_extension/model/map_search_models.dart';
+import 'package:flutter_extension/model/sales_team_report_details_model.dart';
+import 'package:flutter_extension/services/api_service.dart';
+import 'package:flutter_extension/util/api_constant.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/search_filter_chips_row.dart';
+import 'package:flutter_extension/views/base/custom_snackbar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 
@@ -18,40 +22,8 @@ class HomeController extends GetxController {
   static const LatLng center = LatLng(23.7806, 90.4056);
   final TextEditingController searchController = TextEditingController();
 
-  final List<MapPointModel> points = <MapPointModel>[
-    const MapPointModel(
-      id: 'm1',
-      name: 'Mohakhali DOHS',
-      visits: 15,
-      customers: 58,
-      isVisited: true,
-      position: LatLng(23.7809, 90.4050),
-    ),
-    const MapPointModel(
-      id: 'm2',
-      name: 'Wireless Gate Colony',
-      visits: 8,
-      customers: 40,
-      isVisited: false,
-      position: LatLng(23.7788, 90.4084),
-    ),
-    const MapPointModel(
-      id: 'm3',
-      name: 'Gulshan Link Road',
-      visits: 11,
-      customers: 36,
-      isVisited: true,
-      position: LatLng(23.7834, 90.4111),
-    ),
-    const MapPointModel(
-      id: 'm4',
-      name: 'Amtoli Junction',
-      visits: 5,
-      customers: 20,
-      isVisited: false,
-      position: LatLng(23.7765, 90.4018),
-    ),
-  ];
+  final List<MapPointModel> points = <MapPointModel>[];
+  final List<SearchCustomerResult> _customerPool = <SearchCustomerResult>[];
 
   final Set<Marker> markers = <Marker>{};
   BitmapDescriptor? _greenMarkerIcon;
@@ -59,6 +31,12 @@ class HomeController extends GetxController {
   MapPointModel? selectedPoint;
   bool isSearchOpen = false;
   MapSearchFilterKind searchFilter = MapSearchFilterKind.all;
+  bool isLoading = false;
+  String? errorMessage;
+
+  bool isColonyReportDetailsLoading = false;
+  String? colonyReportDetailsErrorMessage;
+  SalesTeamReportDetailsModel? colonyReportDetails;
 
   static const List<String> _districts = <String>[
     'North District',
@@ -74,27 +52,8 @@ class HomeController extends GetxController {
     'Yesterday',
   ];
 
-  static const List<SearchCustomerResult> _customerPool =
-      <SearchCustomerResult>[
-    SearchCustomerResult(
-      id: 'c1',
-      colonyName: 'Green Valley Colony',
-      role: 'Shop Keeper',
-      initials: 'DK',
-      phone: '+1 (555) 567-8901',
-      email: 'dkumar@primesol.com',
-    ),
-    SearchCustomerResult(
-      id: 'c2',
-      colonyName: 'Mirpur Colony',
-      role: 'Owner',
-      initials: 'AB',
-      phone: '+880 1711 000000',
-      email: 'owner@example.com',
-    ),
-  ];
-
   bool get hasMapsKey => (dotenv.env['GOOGLE_API_KEY'] ?? '').isNotEmpty;
+  String get todayLabel => _formatLongDate(DateTime.now());
 
   /// True when the inline search has text: show full-screen search UI.
   bool get showSearchResultsLayer =>
@@ -226,7 +185,112 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     searchController.addListener(_onSearchTextChanged);
-    buildCustomMarkers();
+    getSalesTeamReport();
+  }
+
+  Future<void> getSalesTeamReport() async {
+    isLoading = true;
+    errorMessage = null;
+    update();
+    try {
+      final String date = _formatDateForApi(DateTime.now());
+      final response = await ApiService().get(
+        ApiConstant.SALES_TEAM_REPORT,
+        queryParams: <String, dynamic>{'date': date},
+        authReq: true,
+      );
+      final dynamic raw = response.data;
+      final List<dynamic> dataList = raw is Map<String, dynamic>
+          ? (raw['data'] as List<dynamic>? ?? <dynamic>[])
+          : <dynamic>[];
+
+      points.clear();
+      _customerPool.clear();
+
+      for (final dynamic item in dataList) {
+        if (item is! Map<String, dynamic>) continue;
+
+        final Map<String, dynamic> colony =
+            (item['colony'] as Map<String, dynamic>? ?? <String, dynamic>{});
+        // This API uses an `id` for the report row, and another `colony.id` inside the payload.
+        // The "details" endpoint should be called using the report row `id`.
+        final String reportId = (item['id'] ?? '').toString();
+        final String colonyName = (colony['name'] ?? '').toString();
+        final double lat = _toDouble(colony['latitude']);
+        final double lng = _toDouble(colony['longitude']);
+        if (reportId.isEmpty || colonyName.isEmpty) continue;
+
+        final int completedCount = _toInt(item['completed_count']);
+        final int totalCount = _toInt(item['total_customers']);
+        final bool visited = (item['is_visited'] == true);
+
+        points.add(
+          MapPointModel(
+            id: reportId,
+            name: colonyName,
+            visits: completedCount,
+            customers: totalCount,
+            isVisited: visited,
+            position: LatLng(lat, lng),
+          ),
+        );
+
+        final List<dynamic> pendingCustomers =
+            item['pending_customers'] as List<dynamic>? ?? <dynamic>[];
+        final List<dynamic> completedCustomers =
+            item['completed_customers'] as List<dynamic>? ?? <dynamic>[];
+        _customerPool.addAll(
+          _mapCustomers(
+            colonyName: colonyName,
+            pendingCustomers: pendingCustomers,
+            completedCustomers: completedCustomers,
+          ),
+        );
+      }
+
+      await buildCustomMarkers();
+    } catch (e) {
+      errorMessage = e.toString();
+      showCustomSnackBar(errorMessage ?? 'Failed to load report data.', getXSnackBar: true);
+    } finally {
+      isLoading = false;
+      update();
+    }
+  }
+
+  Future<void> fetchColonyReportDetails(String reportId) async {
+    if (reportId.isEmpty) return;
+    isColonyReportDetailsLoading = true;
+    colonyReportDetailsErrorMessage = null;
+    colonyReportDetails = null;
+    update();
+
+    try {
+      final response = await ApiService().get(
+        '${ApiConstant.SALES_TEAM_REPORT}$reportId',
+        authReq: true,
+      );
+
+      final dynamic raw = response.data;
+      final dynamic data = raw is Map<String, dynamic> ? raw['data'] : null;
+      if (data is! Map<String, dynamic>) {
+        throw Exception('Invalid response: missing `data`.');
+      }
+
+      colonyReportDetails = SalesTeamReportDetailsModel.fromJson(data);
+
+      update();
+    } catch (e) {
+      colonyReportDetailsErrorMessage = e.toString();
+      showCustomSnackBar(
+        colonyReportDetailsErrorMessage ?? 'Failed to load details.',
+        getXSnackBar: true,
+      );
+      update();
+    } finally {
+      isColonyReportDetailsLoading = false;
+      update();
+    }
   }
 
   Future<void> buildCustomMarkers() async {
@@ -249,6 +313,84 @@ class HomeController extends GetxController {
       ..clear()
       ..addAll(generated);
     update();
+  }
+
+  List<SearchCustomerResult> _mapCustomers({
+    required String colonyName,
+    required List<dynamic> pendingCustomers,
+    required List<dynamic> completedCustomers,
+  }) {
+    final List<SearchCustomerResult> result = <SearchCustomerResult>[];
+    final List<dynamic> customers = <dynamic>[
+      ...pendingCustomers,
+      ...completedCustomers,
+    ];
+    for (final dynamic customer in customers) {
+      if (customer is! Map<String, dynamic>) continue;
+      final String ownerName = (customer['owner_name'] ?? '').toString().trim();
+      final String companyName = (customer['company_name'] ?? '').toString().trim();
+      result.add(
+        SearchCustomerResult(
+          id: (customer['id'] ?? '').toString(),
+          colonyName: colonyName,
+          role: companyName.isEmpty ? 'Customer' : companyName,
+          initials: _initialsFromName(ownerName),
+          phone: (customer['phone'] ?? '').toString(),
+          email: (customer['email'] ?? '').toString(),
+        ),
+      );
+    }
+    return result;
+  }
+
+  String _initialsFromName(String name) {
+    final List<String> parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((String part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'NA';
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  }
+
+  int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.round();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  double _toDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  String _formatDateForApi(DateTime date) {
+    final String year = date.year.toString().padLeft(4, '0');
+    final String month = date.month.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  String _formatLongDate(DateTime date) {
+    const List<String> months = <String>[
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   void onMarkerTap(MapPointModel point) {

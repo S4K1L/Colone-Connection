@@ -153,11 +153,23 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               color: AppColors.grey50,
               alignment: Alignment.center,
-              child: const AppText.md(
-                'Something went wrong',
-                fontSize: 12,
-                useResponsiveSize: true,
-                color: AppColors.grey400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  AppText.md(
+                    home.errorMessage?.isNotEmpty == true
+                        ? home.errorMessage!
+                        : 'Something went wrong',
+                    fontSize: 12,
+                    useResponsiveSize: true,
+                    color: AppColors.grey400,
+                  ),
+                  SizedBox(height: 8.h),
+                  TextButton(
+                    onPressed: home.getSalesTeamReport,
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
             ),
           Positioned(
@@ -244,13 +256,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: _popupOffset!.dx,
               top: _popupOffset!.dy,
-              child: _markerPopupCard(home.selectedPoint!),
+              child: _markerPopupCard(home, home.selectedPoint!),
+            ),
+          if (home.isLoading)
+            const Positioned.fill(
+              child: Center(child: CircularProgressIndicator()),
             ),
         ],
     );
   }
 
-  Widget _markerPopupCard(MapPointModel point) {
+  Widget _markerPopupCard(HomeController home, MapPointModel point) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -314,15 +330,54 @@ class _HomeScreenState extends State<HomeScreen> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => Get.toNamed(
-                    AppRoutes.colonyCustomers,
-                    arguments: ColonyCustomersArgs(
-                      colonyId: point.id,
-                      colonyName: point.name,
-                      totalCustomers: point.customers,
-                      colonyArea: 'North Delhi',
-                    ),
-                  ),
+                  onTap: () async {
+                    Get.dialog(
+                      const Center(child: CircularProgressIndicator()),
+                      barrierDismissible: false,
+                    );
+                    await home.fetchColonyReportDetails(point.id);
+                    Get.back(); // close loading dialog
+
+                    final details = home.colonyReportDetails;
+                    if (details == null) {
+                      Get.snackbar(
+                        'Details',
+                        home.colonyReportDetailsErrorMessage ?? 'Failed to load details.',
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                      return;
+                    }
+
+                    final allCustomers = <dynamic>[
+                      ...?details.pendingCustomers,
+                      ...?details.completedCustomers,
+                    ];
+                    final primary = allCustomers.isNotEmpty ? allCustomers.first : null;
+
+                    Get.toNamed(
+                      AppRoutes.customerDetail,
+                      arguments: CustomerDetailArgs(
+                        name: primary != null
+                            ? (primary.ownerName ?? details.colony?.name ?? 'Customer')
+                            : (details.colony?.name ?? 'Customer'),
+                        category: details.colony?.region ?? '',
+                        email: primary != null
+                            ? (primary.email ?? '')
+                            : '',
+                        phone: primary != null
+                            ? (primary.phone ?? '')
+                            : '',
+                        statusLabel: (details.isVisited ?? false) ? 'Visited' : 'Not Visited',
+                        statusDateLabel: details.date ?? '',
+                        role: primary != null
+                            ? (primary.companyName ?? 'Customer')
+                            : 'Customer',
+                        colonyName: details.colony?.name ?? '',
+                        colonyArea: details.colony?.region ?? '',
+                        reportDetails: details,
+                      ),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(12.r),
                   child: Container(
                     width: double.infinity,
@@ -447,8 +502,8 @@ class MapAppBar extends StatelessWidget {
                         useResponsiveSize: true,
                       ),
                       SizedBox(height: 4.h),
-                      const AppText.rg(
-                        'March 5, 2026',
+                      AppText.rg(
+                        home.todayLabel,
                         fontSize: 13,
                         color: AppColors.white80,
                         useResponsiveSize: true,

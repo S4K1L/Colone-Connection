@@ -17,10 +17,7 @@ class ColoniesScreen extends StatelessWidget {
       builder: (ColoniesController c) {
         return Scaffold(
           backgroundColor: AppColors.green25,
-          body: SafeArea(
-            bottom: false,
-            child: _ColoniesBody(controller: c),
-          ),
+          body: SafeArea(bottom: false, child: _ColoniesBody(controller: c)),
         );
       },
     );
@@ -52,10 +49,7 @@ class _ColoniesBody extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: <Color>[
-                  Color(0xFF2EAD4B),
-                  Color(0xFF4BC76A),
-                ],
+                colors: <Color>[Color(0xFF2EAD4B), Color(0xFF4BC76A)],
               ),
             ),
             child: Row(
@@ -82,10 +76,10 @@ class _ColoniesBody extends StatelessWidget {
                     ],
                   ),
                 ),
-                _HeaderIconButton(
-                  icon: Icons.add,
-                  onTap: controller.onAddColony,
-                ),
+                // _HeaderIconButton(
+                //   icon: Icons.add,
+                //   onTap: controller.onAddColony,
+                // ),
                 SizedBox(width: 10.w),
                 _HeaderIconButton(
                   icon: Icons.search,
@@ -137,8 +131,7 @@ class _ColoniesBody extends StatelessWidget {
                           controller.visibleColonies[index];
                       return ColonyListCard(
                         item: item,
-                        onViewDetails: () =>
-                            controller.onViewDetails(item),
+                        onViewDetails: () => controller.onViewDetails(item),
                       );
                     },
                   ),
@@ -153,10 +146,7 @@ class _ColoniesBody extends StatelessWidget {
 }
 
 class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _HeaderIconButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -176,11 +166,7 @@ class _HeaderIconButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.r),
           ),
           alignment: Alignment.center,
-          child: Icon(
-            icon,
-            color: AppColors.white,
-            size: 22.sp,
-          ),
+          child: Icon(icon, color: AppColors.white, size: 22.sp),
         ),
       ),
     );

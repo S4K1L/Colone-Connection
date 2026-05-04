@@ -1,3 +1,5 @@
+import 'package:flutter_extension/model/sales_team_report_details_model.dart';
+
 /// [Get.arguments] for [ColonyCustomersScreen].
 class ColonyCustomersArgs {
   const ColonyCustomersArgs({
@@ -36,6 +38,7 @@ class CustomerDetailArgs {
     this.role = 'Shop Keeper',
     this.colonyName = '',
     this.colonyArea = '',
+    this.reportDetails,
   });
 
   final String name;
@@ -49,6 +52,7 @@ class CustomerDetailArgs {
   /// Used for [ColonyNavigateScreen] when opening from Navigate.
   final String colonyName;
   final String colonyArea;
+  final SalesTeamReportDetailsModel? reportDetails;
 }
 
 /// [Get.arguments] for [ColonyNavigateScreen] (colony route / directions).

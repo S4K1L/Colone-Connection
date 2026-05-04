@@ -56,30 +56,53 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 );
               },
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 14,
-                        offset: Offset(0, 4.h),
-                      ),
-                    ],
+            GetBuilder<CustomerDetailController>(
+              builder: (CustomerDetailController c) {
+                final bool isCompactTab = c.tabIndex == 0;
+                if (isCompactTab) {
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+                    child: _detailCard(),
+                  );
+                }
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
+                    child: _detailCard(),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: const CustomerDetailTabPages(),
-                ),
-              ),
+                );
+              },
+            ),
+            GetBuilder<CustomerDetailController>(
+              builder: (CustomerDetailController c) {
+                if (c.tabIndex == 0) {
+                  return const Spacer();
+                }
+                return const SizedBox.shrink();
+              },
             ),
             const CustomerDetailBottomBar(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _detailCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: const CustomerDetailTabPages(),
     );
   }
 }
