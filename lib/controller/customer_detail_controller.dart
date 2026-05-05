@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/model/sales_team_report_details_model.dart';
+import 'package:flutter_extension/services/api_service.dart';
+import 'package:flutter_extension/views/base/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 class CustomerNoteEntry {
@@ -29,6 +31,7 @@ class CustomerMachineryEntry {
     this.condition = 'Good',
     this.serial = 'SN-88921',
     this.nextService = '12 Apr, 2026',
+    this.isoNextService = '',
   });
 
   final String id;
@@ -42,6 +45,7 @@ class CustomerMachineryEntry {
   String condition;
   String serial;
   String nextService;
+  String isoNextService;
 }
 
 class VisitHistoryEntry {
@@ -60,22 +64,26 @@ class CustomerDetailController extends GetxController {
   CustomerDetailController({required this.args});
 
   final CustomerDetailArgs args;
+  final ApiService apiService = ApiService();
 
   int tabIndex = 0;
-
   bool contactEditing = false;
+  bool isLoading = false;
+
   late final TextEditingController emailCtrl;
   late final TextEditingController phoneCtrl;
 
+  // Notes
   final List<CustomerNoteEntry> notes = <CustomerNoteEntry>[];
   String? editingNoteId;
   final TextEditingController newNoteCtrl = TextEditingController();
   final TextEditingController editNoteCtrl = TextEditingController();
   bool addNoteExpanded = true;
 
+  // Machinery
   final List<CustomerMachineryEntry> machinery = <CustomerMachineryEntry>[];
   String? editingMachineryId;
-  bool addMachineryExpanded = true;
+  bool addMachineryExpanded = false;
 
   final TextEditingController mTypeCtrl = TextEditingController();
   final TextEditingController mBrandCtrl = TextEditingController();
@@ -85,6 +93,8 @@ class CustomerDetailController extends GetxController {
   final TextEditingController mSerialCtrl = TextEditingController();
   final TextEditingController mNextCtrl = TextEditingController();
   final TextEditingController mNoteCtrl = TextEditingController();
+  // ISO date string (YYYY-MM-DD) set when user picks from date picker
+  String _mNextIsoDate = '';
 
   final List<VisitHistoryEntry> visits = <VisitHistoryEntry>[];
 
@@ -105,132 +115,101 @@ class CustomerDetailController extends GetxController {
     'Needs service',
   ];
 
+  static const List<String> machineryModelOptions = <String>[
+    'X100',
+    'X150',
+    'X200',
+    'X200-PRO',
+    'X300',
+    'X500',
+    'Elite',
+    'Pro Series',
+  ];
+
+  static List<String> get yearOptions {
+    final int current = DateTime.now().year;
+    return List<String>.generate(30, (int i) => '${current - i}');
+  }
+
+  static const List<String> _monthNames = <String>[
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
   @override
   void onInit() {
     super.onInit();
-    final SalesTeamReportCustomerModel? primaryCustomer = _primaryCustomer();
+    _initContactControllers();
+    _seedDataFromReport();
+    addMachineryExpanded = machinery.isEmpty;
+  }
+
+  void _initContactControllers() {
+    final primary = _primaryCustomer();
     emailCtrl = TextEditingController(
-      text: primaryCustomer?.email?.trim().isNotEmpty == true
-          ? primaryCustomer!.email!
-          : args.email,
+      text: _getValidString(primary?.email, args.email),
     );
     phoneCtrl = TextEditingController(
-      text: primaryCustomer?.phone?.trim().isNotEmpty == true
-          ? primaryCustomer!.phone!
-          : args.phone,
+      text: _getValidString(primary?.phone, args.phone),
     );
+  }
 
-    _seedReportBasedNotesAndVisits();
-
-    if (args.reportDetails == null) {
-      machinery.addAll(<CustomerMachineryEntry>[
-        CustomerMachineryEntry(
-          id: 'mac1',
-          title: 'CNC Machine X200',
-          subtitle: 'Model X200-PRO · Serial SN-88921',
-          note: 'Running well after last service.',
-        ),
-        CustomerMachineryEntry(
-          id: 'mac2',
-          title: 'CNC Machine X200',
-          subtitle: 'Model X200-PRO · Backup unit',
-          note: 'Scheduled for belt inspection next month.',
-        ),
-      ]);
-    } else {
-      _seedMachineryFromReport();
-    }
-
-    // For API-driven detail screens with no machinery records, keep add form open
-    // so users see an actionable form instead of an empty area.
-    if (machinery.isEmpty) {
-      addMachineryExpanded = true;
-    }
+  String _getValidString(String? val, String fallback) {
+    return (val?.trim().isNotEmpty ?? false) ? val! : fallback;
   }
 
   SalesTeamReportCustomerModel? _primaryCustomer() {
     final report = args.reportDetails;
-    final List<SalesTeamReportCustomerModel> pending =
-        report?.pendingCustomers ?? <SalesTeamReportCustomerModel>[];
-    final List<SalesTeamReportCustomerModel> completed =
-        report?.completedCustomers ?? <SalesTeamReportCustomerModel>[];
-    if (pending.isNotEmpty) return pending.first;
-    if (completed.isNotEmpty) return completed.first;
-    return null;
+    return (report?.pendingCustomers?.isNotEmpty ?? false)
+        ? report!.pendingCustomers!.first
+        : (report?.completedCustomers?.isNotEmpty ?? false)
+        ? report!.completedCustomers!.first
+        : null;
   }
 
-  void _seedReportBasedNotesAndVisits() {
+  void _seedDataFromReport() {
     final report = args.reportDetails;
     if (report == null) {
-      notes.addAll(<CustomerNoteEntry>[
-        CustomerNoteEntry(
-          id: 'n1',
-          text: 'Customer prefers morning visits.',
-          dateLabel: '02 Feb, 2025',
-        ),
-        CustomerNoteEntry(
-          id: 'n2',
-          text: 'Follow up on spare parts order.',
-          dateLabel: '15 Jan, 2025',
-        ),
-      ]);
-      visits.addAll(<VisitHistoryEntry>[
-        const VisitHistoryEntry(
-          dateLabel: '5 March, 2026',
-          summary: 'Routine visit — stock check completed',
-          status: 'Visited',
-        ),
-        const VisitHistoryEntry(
-          dateLabel: '12 Feb, 2026',
-          summary: 'Follow-up on machinery order',
-          status: 'Visited',
-        ),
-        const VisitHistoryEntry(
-          dateLabel: '28 Jan, 2026',
-          summary: 'Missed appointment',
-          status: 'No show',
-        ),
-      ]);
+      _seedDummyData();
       return;
     }
 
-    final List<SalesTeamReportCustomerModel> allCustomers =
-        <SalesTeamReportCustomerModel>[
+    final List<SalesTeamReportCustomerModel> allCustomers = [
       ...?report.pendingCustomers,
       ...?report.completedCustomers,
     ];
-    for (int i = 0; i < allCustomers.length; i++) {
-      final SalesTeamReportCustomerModel c = allCustomers[i];
-      final String owner = (c.ownerName ?? '').trim();
-      final String company = (c.companyName ?? '').trim();
-      final String city = (c.city ?? '').trim();
-      final String state = (c.state ?? '').trim();
-      final String country = (c.country ?? '').trim();
 
-      notes.add(
-        CustomerNoteEntry(
-          id: 'n_api_${c.id ?? i}',
-          text:
-              '${owner.isEmpty ? "Customer" : owner} · ${company.isEmpty ? "-" : company}\n'
-              'Status: ${c.status ?? "-"}\n'
-              'Location: ${city.isEmpty ? "-" : city}, ${state.isEmpty ? "-" : state}, ${country.isEmpty ? "-" : country}',
-          dateLabel: report.date ?? 'N/A',
-        ),
-      );
+    final String date = report.date ?? 'N/A';
+
+    for (int i = 0; i < allCustomers.length; i++) {
+      final c = allCustomers[i];
+      _addNoteFromCustomer(c, date, i);
+      _addMachineryFromCustomer(c, i);
     }
+
     if (notes.isEmpty) {
       notes.add(
         CustomerNoteEntry(
           id: 'n_api_empty',
-          text: 'No customer records found in this report.',
-          dateLabel: report.date ?? 'N/A',
+          text: 'No customer records found.',
+          dateLabel: date,
         ),
       );
     }
 
     visits.add(
       VisitHistoryEntry(
-        dateLabel: report.date ?? 'N/A',
+        dateLabel: date,
         summary:
             'Pending: ${report.pendingCount ?? 0}, Completed: ${report.completedCount ?? 0}, Total: ${report.totalCustomers ?? 0}',
         status: (report.isVisited ?? false) ? 'Visited' : 'Not Visited',
@@ -238,65 +217,123 @@ class CustomerDetailController extends GetxController {
     );
   }
 
-  void _seedMachineryFromReport() {
-    final report = args.reportDetails;
-    if (report == null) return;
+  void _addNoteFromCustomer(
+    SalesTeamReportCustomerModel c,
+    String date,
+    int index,
+  ) {
+    final owner = (c.ownerName ?? '').trim();
+    final company = (c.companyName ?? '').trim();
+    final location = [
+      c.city,
+      c.state,
+      c.country,
+    ].where((s) => s != null && s.trim().isNotEmpty).join(', ');
 
-    final List<SalesTeamReportCustomerModel> allCustomers =
-        <SalesTeamReportCustomerModel>[
-      ...?report.pendingCustomers,
-      ...?report.completedCustomers,
-    ];
+    notes.add(
+      CustomerNoteEntry(
+        id: 'n_api_${c.id ?? index}',
+        text:
+            '${owner.isEmpty ? "Customer" : owner} · ${company.isEmpty ? "-" : company}\n'
+            'Status: ${c.status ?? "-"}\n'
+            'Location: ${location.isEmpty ? "-" : location}',
+        dateLabel: date,
+      ),
+    );
+  }
 
-    if (allCustomers.isEmpty) return;
+  void _addMachineryFromCustomer(SalesTeamReportCustomerModel c, int index) {
+    final serialBase = c.id?.toString() ?? '${index + 1}';
+    final company = (c.companyName ?? '').trim();
 
-    for (int i = 0; i < allCustomers.length; i++) {
-      final SalesTeamReportCustomerModel customer = allCustomers[i];
-      final String owner = (customer.ownerName ?? '').trim();
-      final String company = (customer.companyName ?? '').trim();
-      final String serialBase = customer.id?.toString() ?? '${i + 1}';
+    machinery.add(
+      CustomerMachineryEntry(
+        id: 'mac_api_$serialBase',
+        title: 'CNC Machine X200',
+        subtitle: 'Model: X200-2023',
+        note:
+            'Customer: ${c.ownerName ?? '-'}. ${company.isEmpty ? '' : 'Company: $company.'}',
+        type: 'CNC',
+        brand: company.isEmpty ? 'Select Brand' : company,
+        model: 'X200',
+        purchaseYear: '2010',
+        condition: 'Good',
+        serial: 'SN-$serialBase',
+        nextService: '25 February',
+      ),
+    );
+  }
 
-      machinery.add(
-        CustomerMachineryEntry(
-          id: 'mac_api_$serialBase',
-          title: 'CNC Machine X200',
-          subtitle: 'Model: X200-2023',
-          note:
-              'Customer: ${owner.isEmpty ? '-' : owner}. ${company.isEmpty ? '' : 'Company: $company.'}',
-          type: 'CNC',
-          brand: company.isEmpty ? 'Select Brand' : company,
-          model: 'X200',
-          purchaseYear: '2010',
-          condition: 'Good',
-          serial: 'SN-$serialBase',
-          nextService: '25 February',
-        ),
-      );
-    }
+  void _seedDummyData() {
+    notes.addAll([
+      CustomerNoteEntry(
+        id: 'n1',
+        text: 'Customer prefers morning visits.',
+        dateLabel: '02 Feb, 2025',
+      ),
+      CustomerNoteEntry(
+        id: 'n2',
+        text: 'Follow up on spare parts order.',
+        dateLabel: '15 Jan, 2025',
+      ),
+    ]);
+    visits.addAll([
+      const VisitHistoryEntry(
+        dateLabel: '5 March, 2026',
+        summary: 'Routine visit — stock check completed',
+        status: 'Visited',
+      ),
+      const VisitHistoryEntry(
+        dateLabel: '12 Feb, 2026',
+        summary: 'Follow-up on machinery order',
+        status: 'Visited',
+      ),
+      const VisitHistoryEntry(
+        dateLabel: '28 Jan, 2026',
+        summary: 'Missed appointment',
+        status: 'No show',
+      ),
+    ]);
+    machinery.addAll([
+      CustomerMachineryEntry(
+        id: 'mac1',
+        title: 'CNC Machine X200',
+        subtitle: 'Model X200-PRO · Serial SN-88921',
+        note: 'Running well.',
+      ),
+      CustomerMachineryEntry(
+        id: 'mac2',
+        title: 'CNC Machine X200',
+        subtitle: 'Model X200-PRO · Backup unit',
+        note: 'Scheduled for belt inspection.',
+      ),
+    ]);
   }
 
   @override
   void onClose() {
-    emailCtrl.dispose();
-    phoneCtrl.dispose();
-    newNoteCtrl.dispose();
-    editNoteCtrl.dispose();
-    mTypeCtrl.dispose();
-    mBrandCtrl.dispose();
-    mModelCtrl.dispose();
-    mYearCtrl.dispose();
-    mConditionCtrl.dispose();
-    mSerialCtrl.dispose();
-    mNextCtrl.dispose();
-    mNoteCtrl.dispose();
+    for (var controller in [
+      emailCtrl,
+      phoneCtrl,
+      newNoteCtrl,
+      editNoteCtrl,
+      mTypeCtrl,
+      mBrandCtrl,
+      mModelCtrl,
+      mYearCtrl,
+      mConditionCtrl,
+      mSerialCtrl,
+      mNextCtrl,
+      mNoteCtrl,
+    ]) {
+      controller.dispose();
+    }
     super.onClose();
   }
 
   void setTab(int index) {
     tabIndex = index;
-    if (tabIndex == 2 && machinery.isEmpty) {
-      addMachineryExpanded = true;
-    }
+    if (tabIndex == 2 && machinery.isEmpty) addMachineryExpanded = true;
     update();
   }
 
@@ -311,31 +348,79 @@ class CustomerDetailController extends GetxController {
 
   void saveContact() {
     contactEditing = false;
-    Get.snackbar('Contact', 'Saved (demo).');
     update();
   }
 
+  Future<void> pickNextServiceDate(BuildContext context) async {
+    final DateTime? date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+    if (date != null) {
+      // Human-readable display in the text field
+      mNextCtrl.text =
+          '${date.day} ${_monthNames[date.month - 1]}, ${date.year}';
+      // ISO-8601 stored for API submission
+      _mNextIsoDate =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      update();
+    }
+  }
+
+  Future<void> saveMachineryApi(CustomerMachineryEntry m) async {
+    final int? reportId = args.reportDetails?.id;
+    final int? cId = _primaryCustomer()?.id;
+    if (reportId == null) return;
+    // Format purchase_year: year string → 'YYYY-01-01'
+    final String purchaseYearIso = '${m.purchaseYear}-01-01';
+    // Use the ISO date captured during date-picker or stored in entry
+    final String nextServiceIso =
+        _mNextIsoDate.isNotEmpty ? _mNextIsoDate : m.isoNextService;
+    try {
+      await apiService.put('/sales_team/report/$reportId', <String, dynamic>{
+        'mechineries': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'customer_id': cId ?? 0,
+            'type': m.type,
+            'brand': m.brand,
+            'model': m.model,
+            'serial_number': m.serial,
+            'purchase_year': purchaseYearIso,
+            'condition': m.condition,
+            'next_nervice': nextServiceIso,
+            'note': m.note,
+          },
+        ],
+      }, authReq: true);
+      showCustomSnackBar('Machinery saved.', isError: false);
+    } catch (_) {
+      showCustomSnackBar('Failed to save machinery.', isError: true);
+    }
+  }
+
+  // --- Notes Operations ---
+
   void deleteNote(String id) {
-    notes.removeWhere((CustomerNoteEntry e) => e.id == id);
+    notes.removeWhere((e) => e.id == id);
     if (editingNoteId == id) editingNoteId = null;
     update();
   }
 
   void beginEditNote(String id) {
     editingNoteId = id;
-    final CustomerNoteEntry n =
-        notes.firstWhere((CustomerNoteEntry e) => e.id == id);
+    final n = notes.firstWhere((e) => e.id == id);
     editNoteCtrl.text = n.text;
     addNoteExpanded = false;
     update();
   }
 
   void saveNoteEdit(String id) {
-    final CustomerNoteEntry n =
-        notes.firstWhere((CustomerNoteEntry e) => e.id == id);
+    final n = notes.firstWhere((e) => e.id == id);
     n.text = editNoteCtrl.text.trim();
     editingNoteId = null;
-    Get.snackbar('Notes', 'Note updated (demo).');
+    showCustomSnackBar('Note updated.', isError: false);
     update();
   }
 
@@ -345,43 +430,65 @@ class CustomerDetailController extends GetxController {
     update();
   }
 
-  void saveNewNote() {
-    final String t = newNoteCtrl.text.trim();
-    if (t.isEmpty) return;
-    notes.insert(
-      0,
-      CustomerNoteEntry(
-        id: 'n${DateTime.now().millisecondsSinceEpoch}',
-        text: t,
-        dateLabel: 'Today',
-      ),
+  Future<void> saveNewNote() async {
+    final String text = newNoteCtrl.text.trim();
+    if (text.isEmpty) return;
+
+    final CustomerNoteEntry newNote = CustomerNoteEntry(
+      id: 'n${DateTime.now().millisecondsSinceEpoch}',
+      text: text,
+      dateLabel: 'Today',
     );
+
+    notes.insert(0, newNote);
     newNoteCtrl.clear();
-    Get.snackbar('Notes', 'Note added (demo).');
+    addNoteExpanded = false;
     update();
+
+    final int? reportId = args.reportDetails?.id;
+    final int? cId = _primaryCustomer()?.id;
+    if (reportId != null) {
+      try {
+        await apiService.put('/sales_team/report/$reportId', <String, dynamic>{
+          'notes': <Map<String, dynamic>>[
+            <String, dynamic>{'customer_id': cId ?? 0, 'note': text},
+          ],
+        }, authReq: true);
+        showCustomSnackBar('Note saved to server.', isError: false);
+      } catch (_) {
+        showCustomSnackBar('Failed to save note to server.', isError: true);
+      }
+    }
   }
 
+  // --- Machinery Operations ---
+
   void deleteMachinery(String id) {
-    machinery.removeWhere((CustomerMachineryEntry e) => e.id == id);
-    if (editingMachineryId == id) {
-      editingMachineryId = null;
-      _clearMachineryForm();
-    }
+    machinery.removeWhere((e) => e.id == id);
+    if (editingMachineryId == id) cancelMachineryForm();
     update();
   }
 
   void _clearMachineryForm() {
-    mTypeCtrl.clear();
-    mBrandCtrl.clear();
-    mModelCtrl.clear();
-    mYearCtrl.clear();
-    mConditionCtrl.clear();
-    mSerialCtrl.clear();
-    mNextCtrl.clear();
-    mNoteCtrl.clear();
+    for (var c in [
+      mTypeCtrl,
+      mBrandCtrl,
+      mModelCtrl,
+      mYearCtrl,
+      mConditionCtrl,
+      mSerialCtrl,
+      mNextCtrl,
+      mNoteCtrl,
+    ]) {
+      c.clear();
+    }
+    _mNextIsoDate = '';
   }
 
-  void _fillMachineryForm(CustomerMachineryEntry m) {
+  void beginEditMachinery(String id) {
+    editingMachineryId = id;
+    addMachineryExpanded = false;
+    final m = machinery.firstWhere((e) => e.id == id);
     mTypeCtrl.text = m.type;
     mBrandCtrl.text = m.brand;
     mModelCtrl.text = m.model;
@@ -389,15 +496,8 @@ class CustomerDetailController extends GetxController {
     mConditionCtrl.text = m.condition;
     mSerialCtrl.text = m.serial;
     mNextCtrl.text = m.nextService;
+    _mNextIsoDate = m.isoNextService;
     mNoteCtrl.text = m.note;
-  }
-
-  void beginEditMachinery(String id) {
-    editingMachineryId = id;
-    addMachineryExpanded = false;
-    final CustomerMachineryEntry m =
-        machinery.firstWhere((CustomerMachineryEntry e) => e.id == id);
-    _fillMachineryForm(m);
     update();
   }
 
@@ -408,56 +508,74 @@ class CustomerDetailController extends GetxController {
   }
 
   void saveMachineryForm() {
+    final String type = mTypeCtrl.text.trim().isEmpty
+        ? 'CNC'
+        : mTypeCtrl.text.trim();
+    final String model = mModelCtrl.text.trim().isEmpty
+        ? 'X200'
+        : mModelCtrl.text.trim();
+    final String brand = mBrandCtrl.text.trim().isEmpty
+        ? 'Acme'
+        : mBrandCtrl.text.trim();
+
     if (editingMachineryId != null) {
-      final CustomerMachineryEntry m = machinery
-          .firstWhere((CustomerMachineryEntry e) => e.id == editingMachineryId);
-      m.type = mTypeCtrl.text.trim().isEmpty ? m.type : mTypeCtrl.text.trim();
-      m.brand = mBrandCtrl.text.trim().isEmpty ? m.brand : mBrandCtrl.text.trim();
-      m.model = mModelCtrl.text.trim().isEmpty ? m.model : mModelCtrl.text.trim();
-      m.purchaseYear =
-          mYearCtrl.text.trim().isEmpty ? m.purchaseYear : mYearCtrl.text.trim();
+      final CustomerMachineryEntry m = machinery.firstWhere(
+        (CustomerMachineryEntry e) => e.id == editingMachineryId,
+      );
+      m.type = type;
+      m.brand = brand;
+      m.model = model;
+      m.purchaseYear = mYearCtrl.text.trim().isEmpty
+          ? m.purchaseYear
+          : mYearCtrl.text.trim();
       m.condition = mConditionCtrl.text.trim().isEmpty
           ? m.condition
           : mConditionCtrl.text.trim();
-      m.serial = mSerialCtrl.text.trim().isEmpty ? m.serial : mSerialCtrl.text.trim();
-      m.nextService =
-          mNextCtrl.text.trim().isEmpty ? m.nextService : mNextCtrl.text.trim();
+      m.serial = mSerialCtrl.text.trim().isEmpty
+          ? m.serial
+          : mSerialCtrl.text.trim();
+      m.nextService = mNextCtrl.text.trim().isEmpty
+          ? m.nextService
+          : mNextCtrl.text.trim();
       m.note = mNoteCtrl.text.trim().isEmpty ? m.note : mNoteCtrl.text.trim();
-      m.title = '${m.type} Machine ${m.model}';
-      m.subtitle = 'Model ${m.model}-PRO · Serial ${m.serial}';
+      m.title = '$type Machine $model';
+      m.subtitle = 'Model: $model-${m.purchaseYear}';
       editingMachineryId = null;
-      Get.snackbar('Machinery', 'Updated (demo).');
+      showCustomSnackBar('Machinery updated.', isError: false);
+      _clearMachineryForm();
+      update();
+      saveMachineryApi(m);
     } else {
-      final String brand = mBrandCtrl.text.trim().isEmpty ? 'Acme' : mBrandCtrl.text.trim();
-      final String model = mModelCtrl.text.trim().isEmpty ? 'X200' : mModelCtrl.text.trim();
-      final String type = mTypeCtrl.text.trim().isEmpty ? 'CNC' : mTypeCtrl.text.trim();
-      machinery.insert(
-        0,
-        CustomerMachineryEntry(
-          id: 'mac${DateTime.now().millisecondsSinceEpoch}',
-          title: '$type Machine $model',
-          subtitle:
-              'Model $model-PRO · Serial ${mSerialCtrl.text.trim().isEmpty ? "TBD" : mSerialCtrl.text.trim()}',
-          note: mNoteCtrl.text.trim().isEmpty ? '—' : mNoteCtrl.text.trim(),
-          type: type,
-          brand: brand,
-          model: model,
-          purchaseYear:
-              mYearCtrl.text.trim().isEmpty ? '2024' : mYearCtrl.text.trim(),
-          condition: mConditionCtrl.text.trim().isEmpty
-              ? 'Good'
-              : mConditionCtrl.text.trim(),
-          serial: mSerialCtrl.text.trim().isEmpty ? 'TBD' : mSerialCtrl.text.trim(),
-          nextService: mNextCtrl.text.trim().isEmpty
-              ? 'Not set'
-              : mNextCtrl.text.trim(),
-        ),
+      final CustomerMachineryEntry entry = CustomerMachineryEntry(
+        id: 'mac${DateTime.now().millisecondsSinceEpoch}',
+        title: '$type Machine $model',
+        subtitle:
+            'Model: $model-${mYearCtrl.text.trim().isEmpty ? '2024' : mYearCtrl.text.trim()}',
+        note: mNoteCtrl.text.trim().isEmpty ? '—' : mNoteCtrl.text.trim(),
+        type: type,
+        brand: brand,
+        model: model,
+        purchaseYear: mYearCtrl.text.trim().isEmpty
+            ? '2024'
+            : mYearCtrl.text.trim(),
+        condition: mConditionCtrl.text.trim().isEmpty
+            ? 'Good'
+            : mConditionCtrl.text.trim(),
+        serial: mSerialCtrl.text.trim().isEmpty
+            ? 'TBD'
+            : mSerialCtrl.text.trim(),
+        nextService: mNextCtrl.text.trim().isEmpty
+            ? 'Not set'
+            : mNextCtrl.text.trim(),
+        isoNextService: _mNextIsoDate,
       );
+      machinery.insert(0, entry);
       addMachineryExpanded = false;
-      Get.snackbar('Machinery', 'Added (demo).');
+      showCustomSnackBar('Machinery added.', isError: false);
+      _clearMachineryForm();
+      update();
+      saveMachineryApi(entry);
     }
-    _clearMachineryForm();
-    update();
   }
 
   void setAddMachineryExpanded(bool value) {
@@ -465,30 +583,30 @@ class CustomerDetailController extends GetxController {
     if (value) {
       editingMachineryId = null;
       _clearMachineryForm();
-      mTypeCtrl.text = 'CNC';
-      mBrandCtrl.text = 'Acme';
-      mModelCtrl.text = 'X200';
-      mYearCtrl.text = '2022';
-      mConditionCtrl.text = 'Good';
     }
     update();
   }
 
-  void markVisited() {
-    Get.snackbar('Visit', 'Marked as visited (demo).');
+  Future<void> markVisited(int id) async {
+    try {
+      await apiService.put("/sales_team/report/$id", {
+        'is_visited': true,
+      }, authReq: true);
+      showCustomSnackBar("Marked as visited", isError: false);
+      update();
+    } catch (e) {
+      showCustomSnackBar("Failed to mark as visited", isError: true);
+    }
   }
 
   void navigateToCustomer() {
-    final String full = args.colonyName.isNotEmpty
-        ? args.colonyName
-        : 'Green Valley Colony';
-    final String area =
-        args.colonyArea.isNotEmpty ? args.colonyArea : 'North Delhi';
     Get.toNamed(
       AppRoutes.colonyNavigate,
       arguments: ColonyNavigateArgs(
-        titleFull: full,
-        area: area,
+        titleFull: args.colonyName.isNotEmpty
+            ? args.colonyName
+            : 'Green Valley Colony',
+        area: args.colonyArea.isNotEmpty ? args.colonyArea : 'North Delhi',
         distanceKm: '1',
         etaMinutes: '6',
       ),

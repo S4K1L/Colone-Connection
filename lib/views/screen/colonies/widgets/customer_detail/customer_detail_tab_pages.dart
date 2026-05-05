@@ -323,7 +323,7 @@ class _MachineryTab extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
-                    color: _noteTint,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(color: AppColors.grey100),
                   ),
@@ -436,6 +436,71 @@ class _MachineryTab extends StatelessWidget {
                         ),
                       ],
                     ),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              AppText.rg(
+                                'Next Service',
+                                fontSize: 11,
+                                color: AppColors.grey300,
+                                useResponsiveSize: true,
+                              ),
+                              SizedBox(height: 2.h),
+                              AppText.smd(
+                                m.nextService,
+                                fontSize: 12,
+                                color: AppColors.grey500,
+                                useResponsiveSize: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              AppText.rg(
+                                'Condition',
+                                fontSize: 11,
+                                color: AppColors.grey300,
+                                useResponsiveSize: true,
+                              ),
+                              SizedBox(height: 2.h),
+                              AppText.smd(
+                                m.condition,
+                                fontSize: 12,
+                                color: AppColors.grey500,
+                                useResponsiveSize: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              AppText.rg(
+                                'Purchase Year',
+                                fontSize: 11,
+                                color: AppColors.grey300,
+                                useResponsiveSize: true,
+                              ),
+                              SizedBox(height: 2.h),
+                              AppText.smd(
+                                m.purchaseYear,
+                                fontSize: 12,
+                                color: AppColors.grey500,
+                                useResponsiveSize: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 10.h),
                     Container(
                       width: double.infinity,
@@ -445,7 +510,7 @@ class _MachineryTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: AppText.rg(
-                        'Note: ${m.note}',
+                        m.note,
                         fontSize: 12,
                         color: AppColors.grey500,
                         useResponsiveSize: true,
@@ -538,9 +603,15 @@ class _MachineryForm extends StatelessWidget {
         ),
         _LabeledField(
           label: 'Model',
-          child: TextField(
-            controller: c.mModelCtrl,
-            decoration: _fieldDeco('Select Type'),
+          child: _machineryDropdown(
+            context,
+            value: c.mModelCtrl.text.isEmpty ? null : c.mModelCtrl.text,
+            items: CustomerDetailController.machineryModelOptions,
+            hint: 'Select Model',
+            onChanged: (String? v) {
+              c.mModelCtrl.text = v ?? '';
+              c.update();
+            },
           ),
         ),
         _LabeledField(
@@ -555,10 +626,15 @@ class _MachineryForm extends StatelessWidget {
             Expanded(
               child: _LabeledField(
                 label: 'Purchase Year',
-                child: TextField(
-                  controller: c.mYearCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: _fieldDeco('Select Year'),
+                child: _machineryDropdown(
+                  context,
+                  value: c.mYearCtrl.text.isEmpty ? null : c.mYearCtrl.text,
+                  items: CustomerDetailController.yearOptions,
+                  hint: 'Select Year',
+                  onChanged: (String? v) {
+                    c.mYearCtrl.text = v ?? '';
+                    c.update();
+                  },
                 ),
               ),
             ),
@@ -579,9 +655,21 @@ class _MachineryForm extends StatelessWidget {
         ),
         _LabeledField(
           label: 'Next Service',
-          child: TextField(
-            controller: c.mNextCtrl,
-            decoration: _fieldDeco('Select Date'),
+          child: GestureDetector(
+            onTap: () => c.pickNextServiceDate(context),
+            child: AbsorbPointer(
+              child: TextField(
+                controller: c.mNextCtrl,
+                readOnly: true,
+                decoration: _fieldDeco('Select Date').copyWith(
+                  suffixIcon: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18.sp,
+                    color: AppColors.grey300,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         _LabeledField(

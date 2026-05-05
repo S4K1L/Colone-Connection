@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Offset? _popupOffset;
   String? _popupForId;
   double _currentZoom = 13.8;
+  bool _hasFittedMarkers = false;
 
   @override
   void initState() {
@@ -86,6 +87,16 @@ class _HomeScreenState extends State<HomeScreen> {
         _updatePopupPosition(home.selectedPoint!);
       });
     }
+
+    // Auto-fit markers once when they are loaded
+    if (home.points.isNotEmpty &&
+        _mapController != null &&
+        !_hasFittedMarkers) {
+      _hasFittedMarkers = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fitMarkers(home.points);
+      });
+    }
   }
 
   Future<void> _zoomIn() async {
@@ -98,6 +109,39 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_mapController == null) return;
     _currentZoom = (_currentZoom - 1).clamp(3.0, 20.0);
     await _mapController!.animateCamera(CameraUpdate.zoomTo(_currentZoom));
+  }
+
+  void _fitMarkers(List<MapPointModel> points) {
+    if (_mapController == null || points.isEmpty) return;
+
+    double? minLat, maxLat, minLng, maxLng;
+
+    for (final MapPointModel p in points) {
+      if (minLat == null || p.position.latitude < minLat) {
+        minLat = p.position.latitude;
+      }
+      if (maxLat == null || p.position.latitude > maxLat) {
+        maxLat = p.position.latitude;
+      }
+      if (minLng == null || p.position.longitude < minLng) {
+        minLng = p.position.longitude;
+      }
+      if (maxLng == null || p.position.longitude > maxLng) {
+        maxLng = p.position.longitude;
+      }
+    }
+
+    if (minLat != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: LatLng(minLat, minLng!),
+            northeast: LatLng(maxLat!, maxLng!),
+          ),
+          50.0,
+        ),
+      );
+    }
   }
 
   @override
@@ -126,143 +170,148 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _mapTab(BuildContext context, HomeController home) {
     return Stack(
       children: <Widget>[
-          if (home.hasMapsKey)
-            GoogleMap(
-              initialCameraPosition: const CameraPosition(
-                target: HomeController.center,
-                zoom: 13.8,
-              ),
-              markers: home.markers,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              onMapCreated: (GoogleMapController c) => _mapController = c,
-              onTap: (_) {
-                home.clearSelectedPoint();
-                home.closeSearch();
-                if (mounted) setState(() => _popupOffset = null);
-              },
-              onCameraMove: (CameraPosition position) {
-                _currentZoom = position.zoom;
-                if (home.selectedPoint != null) {
-                  _updatePopupPosition(home.selectedPoint!);
-                }
-              },
-            )
-          else
-            Container(
-              color: AppColors.grey50,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  AppText.md(
-                    home.errorMessage?.isNotEmpty == true
-                        ? home.errorMessage!
-                        : 'Something went wrong',
-                    fontSize: 12,
-                    useResponsiveSize: true,
-                    color: AppColors.grey400,
-                  ),
-                  SizedBox(height: 8.h),
-                  TextButton(
-                    onPressed: home.getSalesTeamReport,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+        if (home.hasMapsKey)
+          GoogleMap(
+            initialCameraPosition: const CameraPosition(
+              target: HomeController.center,
+              zoom: 13.8,
             ),
-          Positioned(
-            left: 14.w,
-            top: 18.h,
-            child: Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(10.r),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.grey300.withValues(alpha: 0.22),
-                    blurRadius: 14.r,
-                    offset: Offset(0, 6.h),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const AppText.smd(
-                    'Status',
-                    fontSize: 12,
-                    useResponsiveSize: true,
-                    color: AppColors.grey500,
-                  ),
-                  SizedBox(height: 8.h),
-                  _statusDot(AppColors.green500, 'Visited', fontSize: 12),
-                  SizedBox(height: 6.h),
-                  _statusDot(AppColors.errorColor, 'Not Visited', fontSize: 12),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            right: 14.w,
-            top: 148.h,
+            markers: Set<Marker>.of(home.markers),
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            onMapCreated: (GoogleMapController c) {
+              _mapController = c;
+              if (home.points.isNotEmpty) {
+                _fitMarkers(home.points);
+              }
+            },
+            onTap: (_) {
+              home.clearSelectedPoint();
+              home.closeSearch();
+              if (mounted) setState(() => _popupOffset = null);
+            },
+            onCameraMove: (CameraPosition position) {
+              _currentZoom = position.zoom;
+              if (home.selectedPoint != null) {
+                _updatePopupPosition(home.selectedPoint!);
+              }
+            },
+          )
+        else
+          Container(
+            color: AppColors.grey50,
+            alignment: Alignment.center,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                _floatingIcon(Icons.zoom_in, onTap: _zoomIn),
-                SizedBox(height: 10.h),
-                _floatingIcon(Icons.zoom_out, onTap: _zoomOut),
+                AppText.md(
+                  home.errorMessage?.isNotEmpty == true
+                      ? home.errorMessage!
+                      : 'Something went wrong',
+                  fontSize: 12,
+                  useResponsiveSize: true,
+                  color: AppColors.grey400,
+                ),
+                SizedBox(height: 8.h),
+                TextButton(
+                  onPressed: home.getSalesTeamReport,
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           ),
-          Positioned(
-            right: 16.w,
-            bottom: 70.h,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => Get.toNamed(AppRoutes.planRouteScreen),
-                borderRadius: BorderRadius.circular(16.r),
-                child: Ink(
-                  height: 48.h,
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
+        Positioned(
+          left: 14.w,
+          top: 18.h,
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(10.r),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.grey300.withValues(alpha: 0.22),
+                  blurRadius: 14.r,
+                  offset: Offset(0, 6.h),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const AppText.smd(
+                  'Status',
+                  fontSize: 12,
+                  useResponsiveSize: true,
+                  color: AppColors.grey500,
+                ),
+                SizedBox(height: 8.h),
+                _statusDot(AppColors.green500, 'Visited', fontSize: 12),
+                SizedBox(height: 6.h),
+                _statusDot(AppColors.errorColor, 'Not Visited', fontSize: 12),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          right: 14.w,
+          top: 148.h,
+          child: Column(
+            children: <Widget>[
+              _floatingIcon(Icons.zoom_in, onTap: _zoomIn),
+              SizedBox(height: 10.h),
+              _floatingIcon(Icons.zoom_out, onTap: _zoomOut),
+            ],
+          ),
+        ),
+        Positioned(
+          right: 16.w,
+          bottom: 70.h,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Get.toNamed(AppRoutes.planRouteScreen),
+              borderRadius: BorderRadius.circular(16.r),
+              child: Ink(
+                height: 48.h,
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.place_outlined,
+                      color: AppColors.white,
+                      size: 24.w,
                     ),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.place_outlined,
-                        color: AppColors.white,
-                        size: 24.w,
-                      ),
-                      SizedBox(width: 8.w),
-                      const AppText.smd(
-                        'Plan Route',
-                        fontSize: 16,
-                        color: AppColors.white,
-                      ),
-                    ],
-                  ),
+                    SizedBox(width: 8.w),
+                    const AppText.smd(
+                      'Plan Route',
+                      fontSize: 16,
+                      color: AppColors.white,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-          if (home.selectedPoint != null && _popupOffset != null)
-            Positioned(
-              left: _popupOffset!.dx,
-              top: _popupOffset!.dy,
-              child: _markerPopupCard(home, home.selectedPoint!),
-            ),
-          if (home.isLoading)
-            const Positioned.fill(
-              child: Center(child: CircularProgressIndicator()),
-            ),
-        ],
+        ),
+        if (home.selectedPoint != null && _popupOffset != null)
+          Positioned(
+            left: _popupOffset!.dx,
+            top: _popupOffset!.dy,
+            child: _markerPopupCard(home, home.selectedPoint!),
+          ),
+        if (home.isLoading)
+          const Positioned.fill(
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      ],
     );
   }
 
@@ -342,7 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (details == null) {
                       Get.snackbar(
                         'Details',
-                        home.colonyReportDetailsErrorMessage ?? 'Failed to load details.',
+                        home.colonyReportDetailsErrorMessage ??
+                            'Failed to load details.',
                         snackPosition: SnackPosition.BOTTOM,
                       );
                       return;
@@ -352,22 +402,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       ...?details.pendingCustomers,
                       ...?details.completedCustomers,
                     ];
-                    final primary = allCustomers.isNotEmpty ? allCustomers.first : null;
+                    final primary = allCustomers.isNotEmpty
+                        ? allCustomers.first
+                        : null;
 
                     Get.toNamed(
                       AppRoutes.customerDetail,
                       arguments: CustomerDetailArgs(
                         name: primary != null
-                            ? (primary.ownerName ?? details.colony?.name ?? 'Customer')
+                            ? (primary.ownerName ??
+                                  details.colony?.name ??
+                                  'Customer')
                             : (details.colony?.name ?? 'Customer'),
                         category: details.colony?.region ?? '',
-                        email: primary != null
-                            ? (primary.email ?? '')
-                            : '',
-                        phone: primary != null
-                            ? (primary.phone ?? '')
-                            : '',
-                        statusLabel: (details.isVisited ?? false) ? 'Visited' : 'Not Visited',
+                        email: primary != null ? (primary.email ?? '') : '',
+                        phone: primary != null ? (primary.phone ?? '') : '',
+                        statusLabel: (details.isVisited ?? false)
+                            ? 'Visited'
+                            : 'Not Visited',
                         statusDateLabel: details.date ?? '',
                         role: primary != null
                             ? (primary.companyName ?? 'Customer')
@@ -386,10 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12.r),
                       gradient: const LinearGradient(
-                        colors: <Color>[
-                          Color(0xFF408E1A),
-                          Color(0xFF17B85F),
-                        ],
+                        colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
                       ),
                     ),
                     child: const AppText.md(
@@ -460,9 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class MapAppBar extends StatelessWidget {
   final HomeController home;
-  const MapAppBar({
-    super.key, required this.home,
-  });
+  const MapAppBar({super.key, required this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -482,10 +529,7 @@ class MapAppBar extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: <Color>[
-                  Color(0xFF408E1A),
-                  Color(0xFF17B85F),
-                ],
+                colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
               ),
             ),
             child: Row(
@@ -542,8 +586,7 @@ class MapAppBar extends StatelessWidget {
                                 cursorColor: AppColors.white,
                                 decoration: InputDecoration(
                                   isDense: true,
-                                  hintText:
-                                      'Search colony or customers...',
+                                  hintText: 'Search colony or customers...',
                                   hintStyle: TextStyle(
                                     color: AppColors.white80,
                                     fontSize: 11.sp,

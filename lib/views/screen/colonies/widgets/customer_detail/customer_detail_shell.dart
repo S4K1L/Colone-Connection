@@ -135,7 +135,8 @@ class CustomerDetailAppBar extends StatelessWidget {
 }
 
 class CustomerDetailBottomBar extends StatelessWidget {
-  const CustomerDetailBottomBar({super.key});
+  const CustomerDetailBottomBar({super.key, required this.args});
+  final CustomerDetailArgs args;
 
   static const Color _barTint = Color(0xFFEEF8EC);
 
@@ -165,7 +166,7 @@ class CustomerDetailBottomBar extends StatelessWidget {
               circleColor: AppColors.green500,
               iconSize: 20.w,
               label: 'Mark Visited',
-              onTap: () => Get.find<CustomerDetailController>().markVisited(),
+              onTap: () => Get.find<CustomerDetailController>().markVisited(args.reportDetails?.id ?? 0),
             ),
           ),
           SizedBox(width: 10.w),

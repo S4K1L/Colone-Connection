@@ -2,7 +2,6 @@
 
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/model/map_point_model.dart';
@@ -179,7 +178,8 @@ class HomeController extends GetxController {
   int get todayColonies => points.length;
   int get totalCustomers =>
       points.fold<int>(0, (int total, MapPointModel e) => total + e.customers);
-  int get totalVisits => points.fold<int>(0, (int total, MapPointModel e) => total + e.visits);
+  int get totalVisits =>
+      points.fold<int>(0, (int total, MapPointModel e) => total + e.visits);
 
   @override
   void onInit() {
@@ -216,6 +216,7 @@ class HomeController extends GetxController {
         // The "details" endpoint should be called using the report row `id`.
         final String reportId = (item['id'] ?? '').toString();
         final String colonyName = (colony['name'] ?? '').toString();
+        final String region = (colony['region'] ?? '').toString();
         final double lat = _toDouble(colony['latitude']);
         final double lng = _toDouble(colony['longitude']);
         if (reportId.isEmpty || colonyName.isEmpty) continue;
@@ -228,6 +229,7 @@ class HomeController extends GetxController {
           MapPointModel(
             id: reportId,
             name: colonyName,
+            region: region.isEmpty ? 'North District' : region,
             visits: completedCount,
             customers: totalCount,
             isVisited: visited,
@@ -251,7 +253,10 @@ class HomeController extends GetxController {
       await buildCustomMarkers();
     } catch (e) {
       errorMessage = e.toString();
-      showCustomSnackBar(errorMessage ?? 'Failed to load report data.', getXSnackBar: true);
+      showCustomSnackBar(
+        errorMessage ?? 'Failed to load report data.',
+        getXSnackBar: true,
+      );
     } finally {
       isLoading = false;
       update();
@@ -328,7 +333,9 @@ class HomeController extends GetxController {
     for (final dynamic customer in customers) {
       if (customer is! Map<String, dynamic>) continue;
       final String ownerName = (customer['owner_name'] ?? '').toString().trim();
-      final String companyName = (customer['company_name'] ?? '').toString().trim();
+      final String companyName = (customer['company_name'] ?? '')
+          .toString()
+          .trim();
       result.add(
         SearchCustomerResult(
           id: (customer['id'] ?? '').toString(),
@@ -353,7 +360,8 @@ class HomeController extends GetxController {
     if (parts.length == 1) {
       return parts.first.substring(0, 1).toUpperCase();
     }
-    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   int _toInt(dynamic value) {
@@ -422,22 +430,28 @@ class HomeController extends GetxController {
   Future<BitmapDescriptor> _createCircleMarker(Color color) async {
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(recorder);
-    const double size = 96;
+    const double size = 120;
     const Offset centerOffset = Offset(size / 2, size / 2);
 
     final Paint shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: .16)
-      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 8);
-    canvas.drawCircle(centerOffset.translate(0, 7), 24, shadowPaint);
+      ..color = Colors.black.withValues(alpha: .24)
+      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 10);
+    // Draw a nice soft shadow
+    canvas.drawCircle(centerOffset.translate(0, 5), 45, shadowPaint);
 
     final Paint whiteRing = Paint()..color = AppColors.white;
-    canvas.drawCircle(centerOffset, 21.5, whiteRing);
+    canvas.drawCircle(centerOffset, 42, whiteRing);
 
     final Paint fillPaint = Paint()..color = color;
-    canvas.drawCircle(centerOffset, 16.5, fillPaint);
+    canvas.drawCircle(centerOffset, 34, fillPaint);
 
-    final ui.Image image = await recorder.endRecording().toImage(size.toInt(), size.toInt());
-    final ByteData? bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    final ui.Image image = await recorder.endRecording().toImage(
+      size.toInt(),
+      size.toInt(),
+    );
+    final ByteData? bytes = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
     return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
   }
 

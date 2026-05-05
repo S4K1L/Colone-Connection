@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
+import 'package:flutter_extension/model/map_point_model.dart';
 import 'package:flutter_extension/model/route_stop_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
@@ -39,18 +40,16 @@ class PlanRouteController extends GetxController {
     Color(0xFF9C27B0), // Purple
   ];
 
+  int _totalDistanceMeters = 0;
+  int _totalDurationSeconds = 0;
+  final List<int> _legDistances = <int>[];
+  final List<int> _legDurations = <int>[];
+
   static const List<String> _shortLabels = <String>[
     'Green',
     'Sunrise',
     'Royal',
     'Silver',
-  ];
-
-  static const List<String> _regions = <String>[
-    'North Delhi',
-    'East Delhi',
-    'West Delhi',
-    'South Delhi',
   ];
 
   bool get hasMapsKey => (dotenv.env['GOOGLE_API_KEY'] ?? '').isNotEmpty;
@@ -67,13 +66,35 @@ class PlanRouteController extends GetxController {
   int get totalRouteCustomers =>
       stops.fold<int>(0, (int t, RouteStopModel s) => t + s.customers);
 
-  /// Planning / next-stop summary stats (mock).
-  String get planningDistanceLabel => '6 KM';
-  String get planningDurationLabel => '3h 30m';
+  /// Planning / next-stop summary stats (dynamic).
+  String get planningDistanceLabel {
+    if (_totalDistanceMeters == 0) return '---';
+    if (_totalDistanceMeters < 1000) return '${_totalDistanceMeters}m';
+    return '${(_totalDistanceMeters / 1000).toStringAsFixed(1)} KM';
+  }
 
-  /// Navigating leg (mock).
-  String get navigatingDistanceLabel => '1 KM';
-  String get navigatingEtaLabel => '6 m';
+  String get planningDurationLabel {
+    if (_totalDurationSeconds == 0) return '---';
+    final int hours = _totalDurationSeconds ~/ 3600;
+    final int minutes = (_totalDurationSeconds % 3600) ~/ 60;
+    if (hours > 0) return '${hours}h ${minutes}m';
+    return '${minutes}m';
+  }
+
+  /// Navigating leg (dynamic).
+  String get navigatingDistanceLabel {
+    if (currentStopIndex >= _legDistances.length) return '---';
+    final int d = _legDistances[currentStopIndex];
+    if (d < 1000) return '${d}m';
+    return '${(d / 1000).toStringAsFixed(1)} KM';
+  }
+
+  String get navigatingEtaLabel {
+    if (currentStopIndex >= _legDurations.length) return '---';
+    final int s = _legDurations[currentStopIndex];
+    final int minutes = s ~/ 60;
+    return '${minutes}m';
+  }
 
   @override
   void onInit() {
@@ -158,13 +179,15 @@ class PlanRouteController extends GetxController {
     stops.clear();
     if (Get.isRegistered<HomeController>()) {
       final HomeController home = Get.find<HomeController>();
-      for (int i = 0; i < home.points.length; i++) {
-        final p = home.points[i];
+      final List<MapPointModel> pending =
+          home.points.where((MapPointModel p) => !p.isVisited).toList();
+      for (int i = 0; i < pending.length; i++) {
+        final MapPointModel p = pending[i];
         stops.add(
           RouteStopModel(
             id: p.id,
             colonyName: p.name,
-            region: _regions[i % _regions.length],
+            region: p.region,
             customers: p.customers,
             position: p.position,
             shortMapLabel: _shortLabels[i % _shortLabels.length],
@@ -297,21 +320,33 @@ class PlanRouteController extends GetxController {
     _isFetchingRoadPolyline = true;
     try {
       final String key = dotenv.env['GOOGLE_API_KEY'] ?? '';
-      final RouteStopModel origin = stops.first;
+      final LatLng start = await _resolveStartPoint();
       final RouteStopModel destination = stops.last;
-      final List<RouteStopModel> viaStops = stops.length > 2
-          ? stops.sublist(1, stops.length - 1)
-          : <RouteStopModel>[];
+      
+      final String originStr = '${start.latitude},${start.longitude}';
+      final String destStr = '${destination.position.latitude},${destination.position.longitude}';
+      
+      final List<RouteStopModel> waypoints = <RouteStopModel>[];
+      if (stage == RouteFlowStage.planning) {
+        // Waypoints: all stops except the last one (destination)
+        if (stops.length > 1) {
+          waypoints.addAll(stops.sublist(0, stops.length - 1));
+        }
+      } else {
+        // Navigating: waypoints are all stops from currentStopIndex to last-1
+        if (currentStopIndex < stops.length - 1) {
+          waypoints.addAll(stops.sublist(currentStopIndex, stops.length - 1));
+        }
+      }
 
       final Map<String, String> params = <String, String>{
-        'origin': '${origin.position.latitude},${origin.position.longitude}',
-        'destination':
-            '${destination.position.latitude},${destination.position.longitude}',
+        'origin': originStr,
+        'destination': destStr,
         'mode': 'driving',
         'key': key,
       };
-      if (viaStops.isNotEmpty) {
-        params['waypoints'] = viaStops
+      if (waypoints.isNotEmpty) {
+        params['waypoints'] = waypoints
             .map((RouteStopModel s) => '${s.position.latitude},${s.position.longitude}')
             .join('|');
       }
@@ -351,10 +386,25 @@ class PlanRouteController extends GetxController {
 
       final Map<String, dynamic> route0 = routes.first as Map<String, dynamic>;
       final List<dynamic> legs = route0['legs'] as List<dynamic>? ?? <dynamic>[];
+      
+      _totalDistanceMeters = 0;
+      _totalDurationSeconds = 0;
+      _legDistances.clear();
+      _legDurations.clear();
+
       final Set<Polyline> legPolylines = <Polyline>{};
       for (int legIndex = 0; legIndex < legs.length; legIndex++) {
         final Map<String, dynamic> leg =
             legs[legIndex] as Map<String, dynamic>? ?? <String, dynamic>{};
+        
+        final int legDist = _toInt(leg['distance']?['value']);
+        final int legDur = _toInt(leg['duration']?['value']);
+        
+        _totalDistanceMeters += legDist;
+        _totalDurationSeconds += legDur;
+        _legDistances.add(legDist);
+        _legDurations.add(legDur);
+
         final List<dynamic> steps = leg['steps'] as List<dynamic>? ?? <dynamic>[];
 
         final List<LatLng> legPoints = <LatLng>[];
@@ -566,6 +616,12 @@ class PlanRouteController extends GetxController {
 
   void onAddNote() {
     Get.snackbar('Note', 'Notes can be wired to your backend later.');
+  }
+
+  int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.round();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   @override

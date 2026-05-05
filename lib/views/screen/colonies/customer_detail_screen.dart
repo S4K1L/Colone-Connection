@@ -81,7 +81,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 return const SizedBox.shrink();
               },
             ),
-            const CustomerDetailBottomBar(),
+            GetBuilder<CustomerDetailController>(
+              builder: (CustomerDetailController c) {
+                return CustomerDetailBottomBar(args: c.args);
+              },
+            ),
           ],
         ),
       ),

@@ -66,8 +66,8 @@ class _ColoniesBody extends StatelessWidget {
                         useResponsiveSize: true,
                       ),
                       SizedBox(height: 6.h),
-                      const AppText.rg(
-                        'Total: ${ColoniesController.totalColonies} Colony',
+                      AppText.rg(
+                        'Total: ${controller.visibleColonies.length} Colony',
                         fontSize: 14,
                         color: AppColors.white,
                         useResponsiveSize: true,
@@ -76,15 +76,11 @@ class _ColoniesBody extends StatelessWidget {
                     ],
                   ),
                 ),
-                // _HeaderIconButton(
-                //   icon: Icons.add,
-                //   onTap: controller.onAddColony,
-                // ),
                 SizedBox(width: 10.w),
-                _HeaderIconButton(
-                  icon: Icons.search,
-                  onTap: controller.onSearchColonies,
-                ),
+                // _HeaderIconButton(
+                //   icon: Icons.search,
+                //   onTap: controller.onSearchColonies,
+                // ),
               ],
             ),
           ),
@@ -123,18 +119,32 @@ class _ColoniesBody extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-                    itemCount: controller.visibleColonies.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final ColonyListItem item =
-                          controller.visibleColonies[index];
-                      return ColonyListCard(
-                        item: item,
-                        onViewDetails: () => controller.onViewDetails(item),
-                      );
-                    },
-                  ),
+                  child: controller.isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.green500,
+                          ),
+                        )
+                      : controller.visibleColonies.isEmpty
+                      ? const Center(
+                          child: AppText.rg(
+                            'No colonies found for this date.',
+                            color: AppColors.grey300,
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+                          itemCount: controller.visibleColonies.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final ColonyListItem item =
+                                controller.visibleColonies[index];
+                            return ColonyListCard(
+                              item: item,
+                              onViewDetails: () =>
+                                  controller.onViewDetails(item),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

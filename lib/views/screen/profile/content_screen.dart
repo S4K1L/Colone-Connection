@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/profile_controller.dart';
+import 'package:flutter_extension/util/api_constant.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
 import 'package:flutter_extension/views/base/route_flow_header.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
 
 class ContentScreen extends StatefulWidget {
@@ -22,7 +24,9 @@ class _ContentScreenState extends State<ContentScreen> {
   void initState() {
     super.initState();
     if (widget.endPoint != null) {
-      profileController.getTermsAndPolicies(widget.endPoint!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        profileController.getTermsAndPolicies(widget.endPoint!);
+      });
     }
   }
 
@@ -52,30 +56,44 @@ class _ContentScreenState extends State<ContentScreen> {
                     topRight: Radius.circular(26.r),
                   ),
                 ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Image.asset(
-                            'assets/images/logo.png',
-                              width: 32.w,
-                            height: 32.w,
-                            fit: BoxFit.contain,
-                          ),
-                          SizedBox(height: 10.h),
-                          const Expanded(
-                            child: AppText.rg(
-                              'By using our platform, you agree to comply with our terms and policies designed to ensure a safe and reliable experience for all users. We respect your privacy and are committed to protecting your personal information. Any data collected through our platform is used only to improve our services and provide a better user experience. Users are expected to use the platform responsibly and abide by any activities that harm the system or other users. We reserve the right to update these terms and policies when necessary to maintain service quality and compliance with applicable regulations.',
-                              fontSize: 18,
-                              color: AppColors.grey300,
-                              useResponsiveSize: true,
-                              textAlign: TextAlign.justify,
+                child: GetBuilder<ProfileController>(
+                  builder: (ProfileController c) {
+                    if (c.isContentLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.green500,
+                        ),
+                      );
+                    }
+
+                    final items = widget.endPoint == ApiConstant.GET_TERMS_AND_POLICIES
+                        ? c.termsAndPolicies
+                        : c.aboutUs;
+
+                    if (items.isEmpty) {
+                      return const Center(child: AppText.rg('No content available.'));
+                    }
+
+                    return ListView.builder(
+                      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 20.h),
+                          child: HtmlWidget(
+                            item.text,
+                            textStyle: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.grey500,
+                              height: 1.5,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

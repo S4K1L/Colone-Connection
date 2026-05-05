@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/model/multi_body.dart';
+import 'package:flutter_extension/model/content_item_model.dart';
 import 'package:flutter_extension/model/user_profile_model.dart';
 import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/services/shared_prefs_service.dart';
@@ -17,9 +18,10 @@ import 'package:image_picker/image_picker.dart';
 
 class ProfileController extends GetxController {
   final ApiService apiService = ApiService();
-  String termsAndPolicies = '';
-  String aboutUs = '';
+  List<ContentItemModel> termsAndPolicies = <ContentItemModel>[];
+  List<ContentItemModel> aboutUs = <ContentItemModel>[];
   bool isLoading = false;
+  bool isContentLoading = false;
   bool isUpdatingProfile = false;
   File? selectedProfileImage;
   final ImagePicker _imagePicker = ImagePicker();
@@ -43,12 +45,17 @@ class ProfileController extends GetxController {
       );
       final dynamic raw = response.data;
       if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
-        profile = UserProfileModel.fromJson(raw['data'] as Map<String, dynamic>);
+        profile = UserProfileModel.fromJson(
+          raw['data'] as Map<String, dynamic>,
+        );
       } else {
         profile = UserProfileModel.empty();
       }
     } catch (e) {
-      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
     } finally {
       isLoading = false;
       update();
@@ -56,18 +63,37 @@ class ProfileController extends GetxController {
   }
 
   Future<void> getTermsAndPolicies(String endPoint) async {
-    isLoading = true;
+    isContentLoading = true;
+    update();
     try {
       final response = await apiService.get(endPoint);
-      if(endPoint == ApiConstant.GET_TERMS_AND_POLICIES){
-        termsAndPolicies = response.data['data'];
-      }else if(endPoint == ApiConstant.GET_ABOUT_US){
-        aboutUs = response.data['data'];
+      final dynamic raw = response.data;
+
+      List<dynamic> dataList = <dynamic>[];
+      if (raw is Map<String, dynamic>) {
+        if (raw['data'] is List) {
+          dataList = raw['data'] as List<dynamic>;
+        } else if (raw['data'] is Map<String, dynamic>) {
+          dataList = <dynamic>[raw['data']];
+        }
+      } else if (raw is List) {
+        dataList = raw;
+      }
+
+      final List<ContentItemModel> items = dataList
+          .whereType<Map<String, dynamic>>()
+          .map(ContentItemModel.fromJson)
+          .toList();
+
+      if (endPoint == ApiConstant.GET_TERMS_AND_POLICIES) {
+        termsAndPolicies = items;
+      } else if (endPoint == ApiConstant.GET_ABOUT_US) {
+        aboutUs = items;
       }
     } catch (e) {
-      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+      debugPrint('Error fetching content: $e');
     } finally {
-      isLoading = false;
+      isContentLoading = false;
       update();
     }
   }
@@ -86,11 +112,21 @@ class ProfileController extends GetxController {
   }
 
   void onTermsAndPolicies() {
-    Get.to(() => const ContentScreen(title: 'Terms & Policies',endPoint: ApiConstant.GET_TERMS_AND_POLICIES,));
+    Get.to(
+      () => const ContentScreen(
+        title: 'Terms & Policies',
+        endPoint: ApiConstant.GET_TERMS_AND_POLICIES,
+      ),
+    );
   }
 
   void onAboutUs() {
-    Get.to(() => const ContentScreen(title: 'About Us',endPoint: ApiConstant.GET_ABOUT_US));
+    Get.to(
+      () => const ContentScreen(
+        title: 'About Us',
+        endPoint: ApiConstant.GET_ABOUT_US,
+      ),
+    );
   }
 
   Future<void> updateProfileName(String fullName) async {
@@ -108,9 +144,7 @@ class ProfileController extends GetxController {
       if (selectedProfileImage != null) {
         response = await apiService.patchMultipartData(
           ApiConstant.UPDATE_USER_PROFILE,
-          <String, dynamic>{
-            'full_name': trimmedName,
-          },
+          <String, dynamic>{'full_name': trimmedName},
           multipartBody: <MultipartBody>[
             MultipartBody(key: 'image', file: selectedProfileImage!),
           ],
@@ -119,25 +153,32 @@ class ProfileController extends GetxController {
       } else {
         response = await apiService.patch(
           ApiConstant.UPDATE_USER_PROFILE,
-          <String, dynamic>{
-            'full_name': trimmedName,
-          },
+          <String, dynamic>{'full_name': trimmedName},
           authReq: true,
         );
       }
       final dynamic raw = response.data;
       if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
-        profile = UserProfileModel.fromJson(raw['data'] as Map<String, dynamic>);
+        profile = UserProfileModel.fromJson(
+          raw['data'] as Map<String, dynamic>,
+        );
       } else {
         profile = profile.copyWith(fullName: trimmedName);
       }
       selectedProfileImage = null;
       Future<void>.delayed(const Duration(milliseconds: 120), () {
-        showCustomSnackBar('Profile updated successfully.', getXSnackBar: true,isError: false);
+        showCustomSnackBar(
+          'Profile updated successfully.',
+          getXSnackBar: true,
+          isError: false,
+        );
       });
       Get.back();
     } catch (e) {
-      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
     } finally {
       isUpdatingProfile = false;
       update();
@@ -154,43 +195,54 @@ class ProfileController extends GetxController {
       selectedProfileImage = File(picked.path);
       update();
     } catch (_) {
-      showCustomSnackBar('Could not pick image. Please try again.', getXSnackBar: true);
+      showCustomSnackBar(
+        'Could not pick image. Please try again.',
+        getXSnackBar: true,
+      );
     }
   }
 
-
-Future<void> updatePassword({
-  required String oldPassword,
-  required String newPassword,
-  required String confirmPassword,
-}) async {
-  isLoading = true;
-  update();
-  try{
-    if (oldPassword.trim().isEmpty ||
-        newPassword.trim().isEmpty ||
-        confirmPassword.trim().isEmpty) {
-      showCustomSnackBar('Please fill all fields.', getXSnackBar: true);
-      return;
-    }
-    if (newPassword != confirmPassword) {
-      showCustomSnackBar('New and confirm passwords do not match.', getXSnackBar: true);
-      return;
-    }
-    await apiService.post(ApiConstant.CHANGE_PASSWORD, {
-      'old_password': oldPassword,
-      'new_password': newPassword,
-    },authReq: true);
-  }catch(e){
-    showCustomSnackBar("Something went wrong. Please try again.", getXSnackBar: true);
-  }finally{
-    isLoading = false;
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    isLoading = true;
     update();
-    Get.back();
-    showCustomSnackBar('Password updated successfully.', getXSnackBar: true,isError: false);
+    try {
+      if (oldPassword.trim().isEmpty ||
+          newPassword.trim().isEmpty ||
+          confirmPassword.trim().isEmpty) {
+        showCustomSnackBar('Please fill all fields.', getXSnackBar: true);
+        return;
+      }
+      if (newPassword != confirmPassword) {
+        showCustomSnackBar(
+          'New and confirm passwords do not match.',
+          getXSnackBar: true,
+        );
+        return;
+      }
+      await apiService.post(ApiConstant.CHANGE_PASSWORD, {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      }, authReq: true);
+    } catch (e) {
+      showCustomSnackBar(
+        "Something went wrong. Please try again.",
+        getXSnackBar: true,
+      );
+    } finally {
+      isLoading = false;
+      update();
+      Get.back();
+      showCustomSnackBar(
+        'Password updated successfully.',
+        getXSnackBar: true,
+        isError: false,
+      );
+    }
   }
-}
-
 
   Future<void> onDeleteAccount() async {
     final bool? ok = await _showFullWidthBottomConfirm(
@@ -209,7 +261,7 @@ Future<void> updatePassword({
 
     if (ok == true) {
       await SharedPrefsService.remove(AppConstants.TOKEN);
-      
+
       Get.offAllNamed(AppRoutes.loginScreen);
     }
   }
@@ -294,11 +346,7 @@ class _ConfirmYesNoDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: _messageStyle,
-          ),
+          Text(message, textAlign: TextAlign.center, style: _messageStyle),
           const SizedBox(height: 22),
           Row(
             children: <Widget>[

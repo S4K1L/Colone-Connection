@@ -4,6 +4,7 @@ class MapPointModel {
   const MapPointModel({
     required this.id,
     required this.name,
+    required this.region,
     required this.visits,
     required this.customers,
     required this.isVisited,
@@ -12,6 +13,7 @@ class MapPointModel {
 
   final String id;
   final String name;
+  final String region;
   final int visits;
   final int customers;
   final bool isVisited;
