@@ -35,10 +35,7 @@ class CustomerDetailAppBar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[
-            Color(0xFF2EAD4B),
-            Color(0xFF4BC76A),
-          ],
+          colors: <Color>[Color(0xFF2EAD4B), Color(0xFF4BC76A)],
         ),
       ),
       padding: EdgeInsets.fromLTRB(8.w, 6.h, 12.w, 14.h),
@@ -166,7 +163,9 @@ class CustomerDetailBottomBar extends StatelessWidget {
               circleColor: AppColors.green500,
               iconSize: 20.w,
               label: 'Mark Visited',
-              onTap: () => Get.find<CustomerDetailController>().markVisited(args.reportDetails?.id ?? 0),
+              onTap: () => Get.find<CustomerDetailController>().markVisited(
+                args.reportDetails?.id.toString() ?? "",
+              ),
             ),
           ),
           SizedBox(width: 10.w),
@@ -232,11 +231,7 @@ class _BottomActionCard extends StatelessWidget {
                   color: circleColor,
                   shape: BoxShape.circle,
                 ),
-                child: AppSvgIcon(
-                  svgPath,
-                  width: iconSize,
-                  height: iconSize,
-                ),
+                child: AppSvgIcon(svgPath, width: iconSize, height: iconSize),
               ),
               SizedBox(height: 8.h),
               AppText.smd(

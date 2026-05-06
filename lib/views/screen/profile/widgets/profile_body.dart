@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/profile_controller.dart';
-import 'package:flutter_extension/model/user_profile_model.dart';
+import 'package:flutter_extension/model/user_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/util/app_svg_paths.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
@@ -19,7 +19,7 @@ class ProfileBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final double headerH = 118.h;
     final double overlap = 28.h;
-    final UserProfileModel p = controller.profile;
+    final UserModel p = controller.profile;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -36,10 +36,7 @@ class ProfileBody extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: <Color>[
-                  Color(0xFF408E1A),
-                  Color(0xFF17B85F),
-                ],
+                colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
               ),
             ),
             child: Column(
@@ -84,12 +81,7 @@ class ProfileBody extends StatelessWidget {
               ],
             ),
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                16.w,
-                16.h,
-                16.w,
-                24.h,
-              ),
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -135,7 +127,6 @@ class ProfileBody extends StatelessWidget {
                     background: false,
                   ),
                   SettingsNavRow(
-                    
                     svgPath: AppSvgPaths.logout,
                     label: 'Log Out',
                     onTap: controller.onLogOut,

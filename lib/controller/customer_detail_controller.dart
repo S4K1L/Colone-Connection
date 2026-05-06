@@ -376,8 +376,9 @@ class CustomerDetailController extends GetxController {
     // Format purchase_year: year string → 'YYYY-01-01'
     final String purchaseYearIso = '${m.purchaseYear}-01-01';
     // Use the ISO date captured during date-picker or stored in entry
-    final String nextServiceIso =
-        _mNextIsoDate.isNotEmpty ? _mNextIsoDate : m.isoNextService;
+    final String nextServiceIso = _mNextIsoDate.isNotEmpty
+        ? _mNextIsoDate
+        : m.isoNextService;
     try {
       await apiService.put('/sales_team/report/$reportId', <String, dynamic>{
         'mechineries': <Map<String, dynamic>>[
@@ -587,9 +588,10 @@ class CustomerDetailController extends GetxController {
     update();
   }
 
-  Future<void> markVisited(int id) async {
+  Future<void> markVisited(String id) async {
+    int rId = int.parse(id);
     try {
-      await apiService.put("/sales_team/report/$id", {
+      await apiService.put("/sales_team/report/$rId", {
         'is_visited': true,
       }, authReq: true);
       showCustomSnackBar("Marked as visited", isError: false);

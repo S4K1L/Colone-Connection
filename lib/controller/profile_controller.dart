@@ -4,7 +4,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/model/multi_body.dart';
 import 'package:flutter_extension/model/content_item_model.dart';
-import 'package:flutter_extension/model/user_profile_model.dart';
+import 'package:flutter_extension/model/user_model.dart';
 import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/services/shared_prefs_service.dart';
 import 'package:flutter_extension/util/api_constant.dart';
@@ -25,7 +25,7 @@ class ProfileController extends GetxController {
   bool isUpdatingProfile = false;
   File? selectedProfileImage;
   final ImagePicker _imagePicker = ImagePicker();
-  UserProfileModel profile = UserProfileModel.empty();
+  UserModel profile = UserModel.empty();
 
   bool pushNotificationsEnabled = true;
 
@@ -45,11 +45,9 @@ class ProfileController extends GetxController {
       );
       final dynamic raw = response.data;
       if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
-        profile = UserProfileModel.fromJson(
-          raw['data'] as Map<String, dynamic>,
-        );
+        profile = UserModel.fromJson(raw['data'] as Map<String, dynamic>);
       } else {
-        profile = UserProfileModel.empty();
+        profile = UserModel.empty();
       }
     } catch (e) {
       showCustomSnackBar(
@@ -159,9 +157,7 @@ class ProfileController extends GetxController {
       }
       final dynamic raw = response.data;
       if (raw is Map<String, dynamic> && raw['data'] is Map<String, dynamic>) {
-        profile = UserProfileModel.fromJson(
-          raw['data'] as Map<String, dynamic>,
-        );
+        profile = UserModel.fromJson(raw['data'] as Map<String, dynamic>);
       } else {
         profile = profile.copyWith(fullName: trimmedName);
       }

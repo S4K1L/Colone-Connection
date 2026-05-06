@@ -4,15 +4,19 @@ import 'package:flutter_extension/model/sales_team_report_details_model.dart';
 class ColonyCustomersArgs {
   const ColonyCustomersArgs({
     required this.colonyId,
+    required this.reportId,
     required this.colonyName,
     required this.totalCustomers,
     this.colonyArea = 'North Delhi',
+    this.reportDetails,
   });
 
   final String colonyId;
+  final String reportId;
   final String colonyName;
   final int totalCustomers;
   final String colonyArea;
+  final SalesTeamReportDetailsModel? reportDetails;
 }
 
 /// [Get.arguments] for [AddCustomerScreen].

@@ -2,6 +2,7 @@
 class ColonyListItem {
   const ColonyListItem({
     required this.id,
+    required this.colonyId,
     required this.name,
     required this.area,
     required this.isVisited,
@@ -13,6 +14,7 @@ class ColonyListItem {
   });
 
   final String id;
+  final String colonyId;
   final String name;
   final String area;
   final bool isVisited;

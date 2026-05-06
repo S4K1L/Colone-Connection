@@ -51,6 +51,7 @@ class ColoniesController extends GetxController {
             (item['colony'] as Map<String, dynamic>? ?? <String, dynamic>{});
         
         final String reportId = (item['id'] ?? '').toString();
+        final String colonyId = (colony['id'] ?? '').toString();
         final String colonyName = (colony['name'] ?? '').toString();
         final String region = (colony['region'] ?? '').toString();
         if (reportId.isEmpty || colonyName.isEmpty) continue;
@@ -62,6 +63,7 @@ class ColoniesController extends GetxController {
         _items.add(
           ColonyListItem(
             id: reportId,
+            colonyId: colonyId,
             name: colonyName,
             area: region.isEmpty ? 'North District' : region,
             isVisited: visited,
@@ -124,7 +126,8 @@ class ColoniesController extends GetxController {
     Get.toNamed(
       AppRoutes.colonyCustomers,
       arguments: ColonyCustomersArgs(
-        colonyId: item.id,
+        colonyId: item.colonyId,
+        reportId: item.id,
         colonyName: item.name,
         totalCustomers: item.customers,
         colonyArea: item.area,

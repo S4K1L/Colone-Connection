@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_extension/controller/profile_controller.dart';
+import 'package:flutter_extension/model/user_model.dart';
 import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/services/shared_prefs_service.dart';
 import 'package:flutter_extension/util/api_constant.dart';
@@ -37,6 +39,8 @@ class AuthController extends GetxController {
   bool otpSubmitted = false;
   bool obscureNewPassword = true;
   bool obscureConfirmPassword = true;
+
+  Rx<UserModel> userModel = Rx<UserModel>(UserModel.empty());
 
   String maskedEmail = 'john@comp***.com';
 
@@ -119,18 +123,12 @@ class AuthController extends GetxController {
         AppConstants.TOKEN,
         response.data['data']['access'],
       );
+      userModel.value = UserModel.fromJson(response.data['data']);
       Get.offAllNamed(AppRoutes.homeScreen);
     } on DioException catch (e) {
-      final Object? err = e.error;
-      final String message = err is ApiException
-          ? err.message
-          : (e.message ?? 'Login failed. Please try again.');
-      showCustomSnackBar(message, getXSnackBar: true);
-    } catch (_) {
-      showCustomSnackBar(
-        'Something went wrong. Please try again.',
-        getXSnackBar: true,
-      );
+      debugPrint(e.toString());
+    } catch (e) {
+      debugPrint(e.toString());
     } finally {
       loginLoading = false;
       update();
@@ -243,7 +241,10 @@ class AuthController extends GetxController {
         'email': forgotEmailController.text.trim(),
         'otp': otpController.text.trim(),
       });
-      SharedPrefsService.set(AppConstants.TOKEN, response.data['data']['access']);
+      SharedPrefsService.set(
+        AppConstants.TOKEN,
+        response.data['data']['access'],
+      );
       Get.toNamed(AppRoutes.resetPasswordScreen);
     } on DioException catch (e) {
       final Object? err = e.error;
@@ -252,7 +253,10 @@ class AuthController extends GetxController {
           : (e.message ?? 'OTP verification failed. Please try again.');
       showCustomSnackBar(message, getXSnackBar: true);
     } catch (_) {
-      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
     } finally {
       otpLoading = false;
       update();
@@ -264,11 +268,13 @@ class AuthController extends GetxController {
     try {
       await apiService.post(ApiConstant.RESET_PASSWORD, {
         'new_password': confirmPasswordController.text.trim(),
-      },
-      authReq: true,
-      );
+      }, authReq: true);
       await SharedPrefsService.remove(AppConstants.TOKEN);
-      showCustomSnackBar('Password reset successfully. Please login again.', getXSnackBar: true,isError: false);
+      showCustomSnackBar(
+        'Password reset successfully. Please login again.',
+        getXSnackBar: true,
+        isError: false,
+      );
       Get.offNamed(AppRoutes.loginScreen);
     } on DioException catch (e) {
       final Object? err = e.error;
@@ -277,7 +283,10 @@ class AuthController extends GetxController {
           : (e.message ?? 'Reset password failed. Please try again.');
       showCustomSnackBar(message, getXSnackBar: true);
     } catch (_) {
-      showCustomSnackBar('Something went wrong. Please try again.', getXSnackBar: true);
+      showCustomSnackBar(
+        'Something went wrong. Please try again.',
+        getXSnackBar: true,
+      );
     } finally {
       resetLoading = false;
       update();

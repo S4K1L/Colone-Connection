@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/controller/home_controller.dart';
+import 'package:flutter_extension/controller/profile_controller.dart';
 import 'package:flutter_extension/model/map_point_model.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/views/base/app_text.dart';
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _popupForId;
   double _currentZoom = 13.8;
   bool _hasFittedMarkers = false;
+  double _mapHeight = 0;
 
   @override
   void initState() {
@@ -54,19 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final double dx = screen.x / dpr;
     final double dy = screen.y / dpr;
 
-    final double cardWidth = 188.w;
-    final double popupHeight = 125.h;
-    final double markerGap = 10.h;
-
-    final double left = (dx - (cardWidth / 2)).clamp(
-      8.w,
-      MediaQuery.of(context).size.width - cardWidth - 8.w,
-    );
-    final double top = dy - popupHeight - markerGap;
-
     if (!mounted) return;
     setState(() {
-      _popupOffset = Offset(left, top);
+      _popupOffset = Offset(dx, dy);
       _popupForId = point.id;
     });
   }
@@ -147,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final HomeController controller = Get.find<HomeController>();
+    final ProfileController profile = Get.find<ProfileController>();
     return GetBuilder<HomeController>(
       builder: (home) {
         _syncPopup(home);
@@ -157,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? MapSearchResultsOverlay(home: home)
                 : Column(
                     children: <Widget>[
-                      MapAppBar(home: home),
+                      MapAppBar(home: home, profile: profile),
                       Expanded(child: _mapTab(context, controller)),
                     ],
                   ),
@@ -168,36 +161,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _mapTab(BuildContext context, HomeController home) {
-    return Stack(
-      children: <Widget>[
-        if (home.hasMapsKey)
-          GoogleMap(
-            initialCameraPosition: const CameraPosition(
-              target: HomeController.center,
-              zoom: 13.8,
-            ),
-            markers: Set<Marker>.of(home.markers),
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            onMapCreated: (GoogleMapController c) {
-              _mapController = c;
-              if (home.points.isNotEmpty) {
-                _fitMarkers(home.points);
-              }
-            },
-            onTap: (_) {
-              home.clearSelectedPoint();
-              home.closeSearch();
-              if (mounted) setState(() => _popupOffset = null);
-            },
-            onCameraMove: (CameraPosition position) {
-              _currentZoom = position.zoom;
-              if (home.selectedPoint != null) {
-                _updatePopupPosition(home.selectedPoint!);
-              }
-            },
-          )
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _mapHeight = constraints.maxHeight;
+        return Stack(
+          children: <Widget>[
+            if (home.hasMapsKey)
+              GoogleMap(
+                initialCameraPosition: const CameraPosition(
+                  target: HomeController.center,
+                  zoom: 13.8,
+                ),
+                markers: Set<Marker>.of(home.markers),
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                onMapCreated: (GoogleMapController c) {
+                  _mapController = c;
+                  if (home.points.isNotEmpty) {
+                    _fitMarkers(home.points);
+                  }
+                },
+                onTap: (_) {
+                  home.clearSelectedPoint();
+                  home.closeSearch();
+                  if (mounted) setState(() => _popupOffset = null);
+                },
+                onCameraMove: (CameraPosition position) {
+                  _currentZoom = position.zoom;
+                  if (home.selectedPoint != null) {
+                    _updatePopupPosition(home.selectedPoint!);
+                  }
+                },
+                onCameraIdle: () {
+                  if (home.selectedPoint != null) {
+                    _updatePopupPosition(home.selectedPoint!);
+                  }
+                },
+              )
         else
           Container(
             color: AppColors.grey50,
@@ -301,17 +302,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        if (home.selectedPoint != null && _popupOffset != null)
-          Positioned(
-            left: _popupOffset!.dx,
-            top: _popupOffset!.dy,
-            child: _markerPopupCard(home, home.selectedPoint!),
-          ),
-        if (home.isLoading)
-          const Positioned.fill(
-            child: Center(child: CircularProgressIndicator()),
-          ),
-      ],
+            if (home.selectedPoint != null && _popupOffset != null)
+              Positioned(
+                left: (_popupOffset!.dx - (188.w / 2)).clamp(
+                  8.w,
+                  MediaQuery.of(context).size.width - 188.w - 8.w,
+                ),
+                bottom: (_mapHeight - _popupOffset!.dy) + 12.h,
+                child: _markerPopupCard(home, home.selectedPoint!),
+              ),
+            if (home.isLoading)
+              const Positioned.fill(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -398,33 +404,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       return;
                     }
 
-                    final allCustomers = <dynamic>[
-                      ...?details.pendingCustomers,
-                      ...?details.completedCustomers,
-                    ];
-                    final primary = allCustomers.isNotEmpty
-                        ? allCustomers.first
-                        : null;
-
                     Get.toNamed(
-                      AppRoutes.customerDetail,
-                      arguments: CustomerDetailArgs(
-                        name: primary != null
-                            ? (primary.ownerName ??
-                                  details.colony?.name ??
-                                  'Customer')
-                            : (details.colony?.name ?? 'Customer'),
-                        category: details.colony?.region ?? '',
-                        email: primary != null ? (primary.email ?? '') : '',
-                        phone: primary != null ? (primary.phone ?? '') : '',
-                        statusLabel: (details.isVisited ?? false)
-                            ? 'Visited'
-                            : 'Not Visited',
-                        statusDateLabel: details.date ?? '',
-                        role: primary != null
-                            ? (primary.companyName ?? 'Customer')
-                            : 'Customer',
-                        colonyName: details.colony?.name ?? '',
+                      AppRoutes.colonyCustomers,
+                      arguments: ColonyCustomersArgs(
+                        colonyId: (details.colony?.id ?? point.id).toString(),
+                        reportId: (details.id ?? 0).toString(),
+                        colonyName: details.colony?.name ?? point.name,
+                        totalCustomers: point.customers,
                         colonyArea: details.colony?.region ?? '',
                         reportDetails: details,
                       ),
@@ -509,7 +495,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class MapAppBar extends StatelessWidget {
   final HomeController home;
-  const MapAppBar({super.key, required this.home});
+  final ProfileController profile;
+  const MapAppBar({super.key, required this.home, required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -539,8 +526,8 @@ class MapAppBar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const AppText.smd(
-                        'Hlw, Rahim',
+                      AppText.smd(
+                        'Hlw, ${profile.profile.fullName}',
                         fontSize: 24,
                         color: AppColors.white,
                         useResponsiveSize: true,

@@ -119,66 +119,50 @@ class _ColoniesBody extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: controller.isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.green500,
-                          ),
-                        )
-                      : controller.visibleColonies.isEmpty
-                      ? const Center(
-                          child: AppText.rg(
-                            'No colonies found for this date.',
-                            color: AppColors.grey300,
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-                          itemCount: controller.visibleColonies.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            final ColonyListItem item =
-                                controller.visibleColonies[index];
-                            return ColonyListCard(
-                              item: item,
-                              onViewDetails: () =>
-                                  controller.onViewDetails(item),
-                            );
-                          },
-                        ),
+                  child: RefreshIndicator(
+                    onRefresh: () => controller.getColoniesReport(),
+                    color: AppColors.green500,
+                    child: controller.visibleColonies.isEmpty &&
+                            controller.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.green500,
+                            ),
+                          )
+                        : controller.visibleColonies.isEmpty
+                            ? SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Container(
+                                  height: 400.h,
+                                  alignment: Alignment.center,
+                                  child: const AppText.rg(
+                                    'No colonies found for this date.',
+                                    color: AppColors.grey300,
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                padding:
+                                    EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: controller.visibleColonies.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final ColonyListItem item =
+                                      controller.visibleColonies[index];
+                                  return ColonyListCard(
+                                    item: item,
+                                    onViewDetails: () =>
+                                        controller.onViewDetails(item),
+                                  );
+                                },
+                              ),
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          width: 44.w,
-          height: 44.w,
-          decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          alignment: Alignment.center,
-          child: Icon(icon, color: AppColors.white, size: 22.sp),
-        ),
-      ),
     );
   }
 }

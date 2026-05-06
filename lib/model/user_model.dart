@@ -1,5 +1,5 @@
-class UserProfileModel {
-  const UserProfileModel({
+class UserModel {
+  const UserModel({
     required this.id,
     required this.email,
     required this.fullName,
@@ -17,8 +17,8 @@ class UserProfileModel {
   final UserProfileDetails profile;
   final bool isActive;
 
-  factory UserProfileModel.empty() {
-    return const UserProfileModel(
+  factory UserModel.empty() {
+    return const UserModel(
       id: 0,
       email: '',
       fullName: '',
@@ -29,8 +29,8 @@ class UserProfileModel {
     );
   }
 
-  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    return UserProfileModel(
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
       id: (json['id'] is int)
           ? json['id'] as int
           : int.tryParse('${json['id'] ?? 0}') ?? 0,
@@ -47,7 +47,7 @@ class UserProfileModel {
     );
   }
 
-  UserProfileModel copyWith({
+  UserModel copyWith({
     int? id,
     String? email,
     String? fullName,
@@ -56,7 +56,7 @@ class UserProfileModel {
     UserProfileDetails? profile,
     bool? isActive,
   }) {
-    return UserProfileModel(
+    return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
@@ -100,19 +100,19 @@ class UserProfileDetails {
   final String jobTitle;
 
   const UserProfileDetails.empty()
-      : address = '',
-        dateOfBirth = '',
-        gender = '',
-        city = '',
-        country = '',
-        postalCode = '',
-        bio = '',
-        website = '',
-        facebook = '',
-        linkedin = '',
-        twitter = '',
-        company = '',
-        jobTitle = '';
+    : address = '',
+      dateOfBirth = '',
+      gender = '',
+      city = '',
+      country = '',
+      postalCode = '',
+      bio = '',
+      website = '',
+      facebook = '',
+      linkedin = '',
+      twitter = '',
+      company = '',
+      jobTitle = '';
 
   factory UserProfileDetails.fromJson(Map<String, dynamic> json) {
     return UserProfileDetails(

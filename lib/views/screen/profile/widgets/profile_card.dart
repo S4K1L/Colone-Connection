@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_extension/model/user_profile_model.dart';
+import 'package:flutter_extension/model/user_model.dart';
 import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/util/app_colors.dart';
 import 'package:flutter_extension/util/app_svg_paths.dart';
@@ -15,7 +15,7 @@ class ProfileCard extends StatelessWidget {
     required this.onEditProfile,
   });
 
-  final UserProfileModel profile;
+  final UserModel profile;
   final VoidCallback onEditProfile;
 
   @override
@@ -25,14 +25,19 @@ class ProfileCard extends StatelessWidget {
         ? rawImage
         : (ApiService.getImgUrl(rawImage) ?? '');
     final bool hasImage = rawImage.isNotEmpty;
-    final String name = profile.fullName.isNotEmpty ? profile.fullName : 'Unknown User';
+    final String name = profile.fullName.isNotEmpty
+        ? profile.fullName
+        : 'Unknown User';
     final String jobTitle = profile.profile.jobTitle.isNotEmpty
         ? profile.profile.jobTitle
         : 'Not specified';
     final String company = profile.profile.company.isNotEmpty
         ? profile.profile.company
         : 'Not specified';
-    final String location = _buildLocation(profile.profile.city, profile.profile.country);
+    final String location = _buildLocation(
+      profile.profile.city,
+      profile.profile.country,
+    );
 
     return Container(
       padding: EdgeInsets.all(18.w),
@@ -155,15 +160,9 @@ class ProfileCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 16.h),
             child: const Divider(height: 1, color: AppColors.grey50),
           ),
-          ProfileContactLine(
-            svgPath: AppSvgPaths.mail,
-            text: profile.email,
-          ),
+          ProfileContactLine(svgPath: AppSvgPaths.mail, text: profile.email),
           SizedBox(height: 12.h),
-          ProfileContactLine(
-            svgPath: AppSvgPaths.map,
-            text: profile.phone,
-          ),
+          ProfileContactLine(svgPath: AppSvgPaths.map, text: profile.phone),
           SizedBox(height: 12.h),
           ProfileContactLine(
             svgPath: AppSvgPaths.colony,

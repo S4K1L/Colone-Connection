@@ -10,22 +10,21 @@ import 'package:flutter_extension/views/screen/profile/change_password_screen.da
 import 'package:flutter_extension/views/screen/profile/edit_profile_screen.dart';
 import 'package:flutter_extension/views/screen/colonies/add_colony_screen.dart';
 import 'package:flutter_extension/views/screen/colonies/add_customer_screen.dart';
-import 'package:flutter_extension/views/screen/colonies/colony_customers_screen.dart';
+import 'package:flutter_extension/views/screen/colonies/colony_details_screen.dart';
 import 'package:flutter_extension/views/screen/colonies/colony_navigate_screen.dart';
 import 'package:flutter_extension/views/screen/colonies/customer_detail_screen.dart';
 import 'package:get/get.dart';
 import '../views/screen/splash/splash_screen.dart';
 
-class AppRoutes{
-
-  static String splashScreen="/splash_screen";
-  static String homeScreen="/home_screen";
-  static String loginScreen="/login_screen";
-  static String createAccountScreen="/create_account_screen";
-  static String forgotPasswordScreen="/forgot_password_screen";
-  static String otpVerificationScreen="/otp_verification_screen";
-  static String resetPasswordScreen="/reset_password_screen";
-  static String passwordUpdatedScreen="/password_updated_screen";
+class AppRoutes {
+  static String splashScreen = "/splash_screen";
+  static String homeScreen = "/home_screen";
+  static String loginScreen = "/login_screen";
+  static String createAccountScreen = "/create_account_screen";
+  static String forgotPasswordScreen = "/forgot_password_screen";
+  static String otpVerificationScreen = "/otp_verification_screen";
+  static String resetPasswordScreen = "/reset_password_screen";
+  static String passwordUpdatedScreen = "/password_updated_screen";
   static String planRouteScreen = '/plan_route';
   static String editProfileScreen = '/edit_profile';
   static String changePasswordScreen = '/change_password';
@@ -35,25 +34,34 @@ class AppRoutes{
   static String customerDetail = '/customer_detail';
   static String colonyNavigate = '/colony_navigate';
 
- static List<GetPage> page=[
-    GetPage(name:splashScreen, page: ()=>const SplashScreen()),
-     GetPage(name:homeScreen, page: ()=>const CustomBottomNavbar()),
-     GetPage(name:loginScreen, page: ()=>const LoginScreen()),
-     GetPage(name:createAccountScreen, page: ()=>const CreateAccountScreen()),
-     GetPage(name:forgotPasswordScreen, page: ()=>const ForgotPasswordScreen()),
-     GetPage(name:otpVerificationScreen, page: ()=>const OtpVerificationScreen()),
-     GetPage(name:resetPasswordScreen, page: ()=>const ResetPasswordScreen()),
-     GetPage(name:passwordUpdatedScreen, page: ()=>const PasswordUpdatedScreen()),
-     GetPage(name: planRouteScreen, page: () => const PlanRouteScreen()),
-     GetPage(name: editProfileScreen, page: () => const EditProfileScreen()),
-     GetPage(name: changePasswordScreen, page: () => const ChangePasswordScreen()),
-     GetPage(name: colonyCustomers, page: () => const ColonyCustomersScreen()),
-     GetPage(name: addColony, page: () => const AddColonyScreen()),
-     GetPage(name: addCustomer, page: () => const AddCustomerScreen()),
-     GetPage(name: customerDetail, page: () => const CustomerDetailScreen()),
-     GetPage(name: colonyNavigate, page: () => const ColonyNavigateScreen()),
+  static List<GetPage> page = [
+    GetPage(name: splashScreen, page: () => const SplashScreen()),
+    GetPage(name: homeScreen, page: () => const CustomBottomNavbar()),
+    GetPage(name: loginScreen, page: () => const LoginScreen()),
+    GetPage(name: createAccountScreen, page: () => const CreateAccountScreen()),
+    GetPage(
+      name: forgotPasswordScreen,
+      page: () => const ForgotPasswordScreen(),
+    ),
+    GetPage(
+      name: otpVerificationScreen,
+      page: () => const OtpVerificationScreen(),
+    ),
+    GetPage(name: resetPasswordScreen, page: () => const ResetPasswordScreen()),
+    GetPage(
+      name: passwordUpdatedScreen,
+      page: () => const PasswordUpdatedScreen(),
+    ),
+    GetPage(name: planRouteScreen, page: () => const PlanRouteScreen()),
+    GetPage(name: editProfileScreen, page: () => const EditProfileScreen()),
+    GetPage(
+      name: changePasswordScreen,
+      page: () => const ChangePasswordScreen(),
+    ),
+    GetPage(name: colonyCustomers, page: () => const ColonyDetailsScreen()),
+    GetPage(name: addColony, page: () => const AddColonyScreen()),
+    GetPage(name: addCustomer, page: () => const AddCustomerScreen()),
+    GetPage(name: customerDetail, page: () => const CustomerDetailScreen()),
+    GetPage(name: colonyNavigate, page: () => const ColonyNavigateScreen()),
   ];
-
-
-
 }
