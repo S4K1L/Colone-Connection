@@ -151,7 +151,16 @@ class CustomerDetailController extends GetxController {
     super.onInit();
     _initContactControllers();
     _seedDataFromReport();
-    addMachineryExpanded = machinery.isEmpty;
+
+    if (args.shouldShowMachinery) {
+      tabIndex = 2; // Machinery tab
+      addMachineryExpanded = true;
+    } else if (args.shouldShowNotes) {
+      tabIndex = 1; // Notes tab
+      addNoteExpanded = true;
+    } else {
+      addMachineryExpanded = machinery.isEmpty;
+    }
   }
 
   void _initContactControllers() {
@@ -177,8 +186,8 @@ class CustomerDetailController extends GetxController {
         : null;
   }
 
-  void _seedDataFromReport() {
-    final report = args.reportDetails;
+  void _seedDataFromReport([SalesTeamReportDetailsModel? reportOverride]) {
+    final report = reportOverride ?? args.reportDetails;
     if (report == null) {
       _seedDummyData();
       return;
@@ -190,18 +199,55 @@ class CustomerDetailController extends GetxController {
     ];
 
     final String date = report.date ?? 'N/A';
+    final int? targetId = int.tryParse(args.customerId);
+    final customer = allCustomers.firstWhereOrNull((c) => c.id == targetId);
 
-    for (int i = 0; i < allCustomers.length; i++) {
-      final c = allCustomers[i];
-      _addNoteFromCustomer(c, date, i);
-      _addMachineryFromCustomer(c, i);
+    notes.clear();
+    machinery.clear();
+    visits.clear();
+
+    if (customer != null) {
+      // 1. Populate Notes
+      if (customer.notes != null && customer.notes!.isNotEmpty) {
+        for (final n in customer.notes!) {
+          notes.add(
+            CustomerNoteEntry(
+              id: n.id?.toString() ?? 'n_${DateTime.now().hashCode}',
+              text: n.note ?? '',
+              dateLabel: n.date ?? date,
+            ),
+          );
+        }
+      }
+
+      // 2. Populate Machinery
+      if (customer.mechineries != null && customer.mechineries!.isNotEmpty) {
+        for (final m in customer.mechineries!) {
+          machinery.add(
+            CustomerMachineryEntry(
+              id: m.id?.toString() ?? 'm_${DateTime.now().hashCode}',
+              title: '${m.type ?? "Machinery"} ${m.model ?? ""}',
+              subtitle:
+                  'Model: ${m.model ?? "-"} · Serial: ${m.serialNumber ?? "-"}',
+              note: m.note ?? '',
+              type: m.type ?? 'CNC',
+              brand: m.brand ?? '',
+              model: m.model ?? '',
+              purchaseYear: m.purchaseYear?.split('-').first ?? '2024',
+              condition: m.condition ?? 'Good',
+              serial: m.serialNumber ?? '',
+              nextService: m.nextService ?? '',
+            ),
+          );
+        }
+      }
     }
 
     if (notes.isEmpty) {
       notes.add(
         CustomerNoteEntry(
           id: 'n_api_empty',
-          text: 'No customer records found.',
+          text: 'No notes found for this customer.',
           dateLabel: date,
         ),
       );
@@ -211,58 +257,12 @@ class CustomerDetailController extends GetxController {
       VisitHistoryEntry(
         dateLabel: date,
         summary:
-            'Pending: ${report.pendingCount ?? 0}, Completed: ${report.completedCount ?? 0}, Total: ${report.totalCustomers ?? 0}',
+            'Customer Status: ${customer?.status ?? "N/A"}',
         status: (report.isVisited ?? false) ? 'Visited' : 'Not Visited',
       ),
     );
   }
 
-  void _addNoteFromCustomer(
-    SalesTeamReportCustomerModel c,
-    String date,
-    int index,
-  ) {
-    final owner = (c.ownerName ?? '').trim();
-    final company = (c.companyName ?? '').trim();
-    final location = [
-      c.city,
-      c.state,
-      c.country,
-    ].where((s) => s != null && s.trim().isNotEmpty).join(', ');
-
-    notes.add(
-      CustomerNoteEntry(
-        id: 'n_api_${c.id ?? index}',
-        text:
-            '${owner.isEmpty ? "Customer" : owner} · ${company.isEmpty ? "-" : company}\n'
-            'Status: ${c.status ?? "-"}\n'
-            'Location: ${location.isEmpty ? "-" : location}',
-        dateLabel: date,
-      ),
-    );
-  }
-
-  void _addMachineryFromCustomer(SalesTeamReportCustomerModel c, int index) {
-    final serialBase = c.id?.toString() ?? '${index + 1}';
-    final company = (c.companyName ?? '').trim();
-
-    machinery.add(
-      CustomerMachineryEntry(
-        id: 'mac_api_$serialBase',
-        title: 'CNC Machine X200',
-        subtitle: 'Model: X200-2023',
-        note:
-            'Customer: ${c.ownerName ?? '-'}. ${company.isEmpty ? '' : 'Company: $company.'}',
-        type: 'CNC',
-        brand: company.isEmpty ? 'Select Brand' : company,
-        model: 'X200',
-        purchaseYear: '2010',
-        condition: 'Good',
-        serial: 'SN-$serialBase',
-        nextService: '25 February',
-      ),
-    );
-  }
 
   void _seedDummyData() {
     notes.addAll([
@@ -370,9 +370,10 @@ class CustomerDetailController extends GetxController {
   }
 
   Future<void> saveMachineryApi(CustomerMachineryEntry m) async {
-    final int? reportId = args.reportDetails?.id;
-    final int? cId = _primaryCustomer()?.id;
-    if (reportId == null) return;
+    final String rId = args.reportId;
+    final String cId = args.customerId;
+    if (rId == '0' || rId.isEmpty) return;
+
     // Format purchase_year: year string → 'YYYY-01-01'
     final String purchaseYearIso = '${m.purchaseYear}-01-01';
     // Use the ISO date captured during date-picker or stored in entry
@@ -380,10 +381,10 @@ class CustomerDetailController extends GetxController {
         ? _mNextIsoDate
         : m.isoNextService;
     try {
-      await apiService.put('/sales_team/report/$reportId', <String, dynamic>{
+      final response = await apiService.put('/sales_team/report/$rId', <String, dynamic>{
         'mechineries': <Map<String, dynamic>>[
           <String, dynamic>{
-            'customer_id': cId ?? 0,
+            'customer_id': int.tryParse(cId) ?? 0,
             'type': m.type,
             'brand': m.brand,
             'model': m.model,
@@ -395,9 +396,17 @@ class CustomerDetailController extends GetxController {
           },
         ],
       }, authReq: true);
+
+      if (response.data != null && response.data['data'] != null) {
+        final newReport = SalesTeamReportDetailsModel.fromJson(response.data['data']);
+        _seedDataFromReport(newReport);
+      }
+
       showCustomSnackBar('Machinery saved.', isError: false);
     } catch (_) {
       showCustomSnackBar('Failed to save machinery.', isError: true);
+    } finally {
+      update();
     }
   }
 
@@ -446,18 +455,26 @@ class CustomerDetailController extends GetxController {
     addNoteExpanded = false;
     update();
 
-    final int? reportId = args.reportDetails?.id;
-    final int? cId = _primaryCustomer()?.id;
-    if (reportId != null) {
+    final String rId = args.reportId;
+    final String cId = args.customerId;
+    if (rId != '0' && rId.isNotEmpty) {
       try {
-        await apiService.put('/sales_team/report/$reportId', <String, dynamic>{
+        final response = await apiService.put('/sales_team/report/$rId', <String, dynamic>{
           'notes': <Map<String, dynamic>>[
-            <String, dynamic>{'customer_id': cId ?? 0, 'note': text},
+            <String, dynamic>{'customer_id': int.tryParse(cId) ?? 0, 'note': text},
           ],
         }, authReq: true);
+
+        if (response.data != null && response.data['data'] != null) {
+          final newReport = SalesTeamReportDetailsModel.fromJson(response.data['data']);
+          _seedDataFromReport(newReport);
+        }
+
         showCustomSnackBar('Note saved to server.', isError: false);
       } catch (_) {
         showCustomSnackBar('Failed to save note to server.', isError: true);
+      } finally {
+        update();
       }
     }
   }
@@ -589,7 +606,9 @@ class CustomerDetailController extends GetxController {
   }
 
   Future<void> markVisited(String id) async {
-    int rId = int.parse(id);
+    final String rId = args.reportId;
+    if (rId == '0' || rId.isEmpty) return;
+    
     try {
       await apiService.put("/sales_team/report/$rId", {
         'is_visited': true,

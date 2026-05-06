@@ -107,7 +107,7 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
                                     child: Container(
                                       height: 400.h,
                                       alignment: Alignment.center,
-                                      child: AppText.md(
+                                      child: const AppText.md(
                                         'No customers found for this colony.',
                                         color: AppColors.grey300,
                                       ),
@@ -115,25 +115,78 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
                                   )
                                 : ListView.builder(
                                     padding: EdgeInsets.fromLTRB(
-                                        16.w, 8.h, 16.w, 24.h),
+                                      16.w,
+                                      8.h,
+                                      16.w,
+                                      24.h,
+                                    ),
                                     physics:
                                         const AlwaysScrollableScrollPhysics(),
                                     itemCount: c.visibleCustomers.length,
                                     itemBuilder:
                                         (BuildContext context, int index) {
-                                      final ColonyCustomerItem item =
-                                          c.visibleCustomers[index];
-                                      return ColonyCustomerCard(
-                                        item: item,
-                                        colonyName: c.args.colonyName,
-                                        colonyArea: c.args.colonyArea,
-                                        onPrimaryAction: () =>
-                                            c.markCustomerVisited(item.id),
-                                        onSecondaryAction: () =>
-                                            _showAddNoteDialog(
-                                                context, c, item),
-                                      );
-                                    },
+                                          final ColonyCustomerItem item =
+                                              c.visibleCustomers[index];
+                                          return ColonyCustomerCard(
+                                            item: item,
+                                            colonyName: c.args.colonyName,
+                                            colonyArea: c.args.colonyArea,
+                                            reportId: c.args.reportId,
+                                            onPrimaryAction: () {
+                                              if (item.status ==
+                                                  ColonyCustomerStatus
+                                                      .visited) {
+                                                Get.toNamed(
+                                                  AppRoutes.customerDetail,
+                                                  arguments: CustomerDetailArgs(
+                                                    name: item.name,
+                                                    category: item.category,
+                                                    email: item.email,
+                                                    phone: item.phone,
+                                                    statusLabel: 'Visited',
+                                                    statusDateLabel:
+                                                        item.statusDateLabel,
+                                                    role: item.role,
+                                                    colonyName:
+                                                        c.args.colonyName,
+                                                    colonyArea:
+                                                        c.args.colonyArea,
+                                                    shouldShowMachinery: true,
+                                                    customerId: item.id,
+                                                    reportId: c.args.reportId,
+                                                  ),
+                                                );
+                                              } else {
+                                                c.markCustomerVisited(item.id);
+                                              }
+                                            },
+                                            onSecondaryAction: () {
+                                              Get.toNamed(
+                                                AppRoutes.customerDetail,
+                                                arguments: CustomerDetailArgs(
+                                                  name: item.name,
+                                                  category: item.category,
+                                                  email: item.email,
+                                                  phone: item.phone,
+                                                  statusLabel:
+                                                      item.status ==
+                                                          ColonyCustomerStatus
+                                                              .visited
+                                                      ? 'Visited'
+                                                      : 'Overdue',
+                                                  statusDateLabel:
+                                                      item.statusDateLabel,
+                                                  role: item.role,
+                                                  colonyName: c.args.colonyName,
+                                                  colonyArea: c.args.colonyArea,
+                                                  shouldShowNotes: true,
+                                                  customerId: item.id,
+                                                  reportId: c.args.reportId,
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
                                   ),
                           ),
                         ),
@@ -144,101 +197,6 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-
-  void _showAddNoteDialog(
-    BuildContext context,
-    ColonyCustomersController controller,
-    ColonyCustomerItem item,
-  ) {
-    final TextEditingController noteCtrl = TextEditingController();
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              AppText.smd(
-                'Add Note for ${item.name}',
-                fontSize: 18,
-                color: AppColors.grey500,
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: noteCtrl,
-                maxLines: 4,
-                style: TextStyle(fontSize: 14.sp, color: AppColors.grey500),
-                decoration: InputDecoration(
-                  hintText: 'Enter your note here...',
-                  hintStyle: TextStyle(
-                    fontSize: 13.sp,
-                    color: AppColors.grey300,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.grey100),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.grey100),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.green500),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.grey50.withValues(alpha: 0.5),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: AppText.md(
-                      'Cancel',
-                      fontSize: 14,
-                      color: AppColors.grey300,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (noteCtrl.text.trim().isNotEmpty) {
-                        controller.addNote(item.id, noteCtrl.text);
-                        Get.back();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.green500,
-                      elevation: 0,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 10.h,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                    ),
-                    child: const AppText.smd(
-                      'Save Note',
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );

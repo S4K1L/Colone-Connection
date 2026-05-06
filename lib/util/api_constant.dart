@@ -19,7 +19,7 @@ class ApiConstant {
 
   static const String GET_TERMS_AND_POLICIES =
       '/admin_dashboard/terms-conditions/public/';
-  static const String GET_ABOUT_US = '/about-us';
+  static const String GET_ABOUT_US = '/admin_dashboard/about-us/';
 
   static const String GET_NOTIFICATIONS = '/notifications/';
   static const String SALES_TEAM_REPORT = '/sales_team/report/';

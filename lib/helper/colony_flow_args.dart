@@ -39,10 +39,14 @@ class CustomerDetailArgs {
     required this.phone,
     required this.statusLabel,
     required this.statusDateLabel,
+    required this.customerId,
+    required this.reportId,
     this.role = 'Shop Keeper',
     this.colonyName = '',
     this.colonyArea = '',
     this.reportDetails,
+    this.shouldShowMachinery = false,
+    this.shouldShowNotes = false,
   });
 
   final String name;
@@ -51,12 +55,16 @@ class CustomerDetailArgs {
   final String phone;
   final String statusLabel;
   final String statusDateLabel;
+  final String customerId;
+  final String reportId;
   /// Shown under the name in the green header (e.g. Shop Keeper).
   final String role;
   /// Used for [ColonyNavigateScreen] when opening from Navigate.
   final String colonyName;
   final String colonyArea;
   final SalesTeamReportDetailsModel? reportDetails;
+  final bool shouldShowMachinery;
+  final bool shouldShowNotes;
 }
 
 /// [Get.arguments] for [ColonyNavigateScreen] (colony route / directions).

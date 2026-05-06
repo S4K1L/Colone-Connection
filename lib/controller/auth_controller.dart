@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_extension/controller/profile_controller.dart';
 import 'package:flutter_extension/model/user_model.dart';
 import 'package:flutter_extension/services/api_service.dart';
 import 'package:flutter_extension/services/shared_prefs_service.dart';

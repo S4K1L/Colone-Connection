@@ -27,6 +27,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             phone: '',
             statusLabel: '',
             statusDateLabel: '',
+            customerId: '0',
+            reportId: '0',
           );
     Get.put(CustomerDetailController(args: args));
   }

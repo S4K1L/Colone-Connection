@@ -13,6 +13,7 @@ class ColonyCustomerCard extends StatelessWidget {
     required this.item,
     this.colonyName = '',
     this.colonyArea = '',
+    this.reportId = '',
     required this.onPrimaryAction,
     required this.onSecondaryAction,
   });
@@ -20,6 +21,7 @@ class ColonyCustomerCard extends StatelessWidget {
   final ColonyCustomerItem item;
   final String colonyName;
   final String colonyArea;
+  final String reportId;
   final VoidCallback onPrimaryAction;
   final VoidCallback onSecondaryAction;
 
@@ -110,12 +112,13 @@ class ColonyCustomerCard extends StatelessWidget {
                     category: item.category,
                     email: item.email,
                     phone: item.phone,
-                    statusLabel:
-                        visited ? 'Visited' : 'Overdue',
+                    statusLabel: visited ? 'Visited' : 'Overdue',
                     statusDateLabel: item.statusDateLabel,
                     role: item.role,
                     colonyName: colonyName,
                     colonyArea: colonyArea,
+                    customerId: item.id,
+                    reportId: reportId,
                   ),
                 ),
                 behavior: HitTestBehavior.opaque,

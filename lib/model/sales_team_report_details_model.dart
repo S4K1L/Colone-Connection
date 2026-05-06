@@ -94,6 +94,8 @@ class SalesTeamReportCustomerModel {
     this.city,
     this.state,
     this.country,
+    this.notes,
+    this.mechineries,
   });
 
   final int? id;
@@ -105,8 +107,15 @@ class SalesTeamReportCustomerModel {
   final String? city;
   final String? state;
   final String? country;
+  final List<SalesTeamReportNoteModel>? notes;
+  final List<SalesTeamReportMachineryModel>? mechineries;
 
   factory SalesTeamReportCustomerModel.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> notesRaw =
+        json['notes'] as List<dynamic>? ?? <dynamic>[];
+    final List<dynamic> mechRaw =
+        json['mechineries'] as List<dynamic>? ?? <dynamic>[];
+
     return SalesTeamReportCustomerModel(
       id: json['id'] as int?,
       ownerName: json['owner_name']?.toString(),
@@ -117,6 +126,78 @@ class SalesTeamReportCustomerModel {
       city: json['city']?.toString(),
       state: json['state']?.toString(),
       country: json['country']?.toString(),
+      notes: notesRaw
+          .whereType<Map<String, dynamic>>()
+          .map(SalesTeamReportNoteModel.fromJson)
+          .toList(),
+      mechineries: mechRaw
+          .whereType<Map<String, dynamic>>()
+          .map(SalesTeamReportMachineryModel.fromJson)
+          .toList(),
+    );
+  }
+}
+
+class SalesTeamReportNoteModel {
+  const SalesTeamReportNoteModel({
+    this.id,
+    this.date,
+    this.note,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final int? id;
+  final String? date;
+  final String? note;
+  final String? createdAt;
+  final String? updatedAt;
+
+  factory SalesTeamReportNoteModel.fromJson(Map<String, dynamic> json) {
+    return SalesTeamReportNoteModel(
+      id: json['id'] as int?,
+      date: json['date']?.toString(),
+      note: json['note']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
+    );
+  }
+}
+
+class SalesTeamReportMachineryModel {
+  const SalesTeamReportMachineryModel({
+    this.id,
+    this.type,
+    this.brand,
+    this.model,
+    this.serialNumber,
+    this.purchaseYear,
+    this.condition,
+    this.nextService,
+    this.note,
+  });
+
+  final int? id;
+  final String? type;
+  final String? brand;
+  final String? model;
+  final String? serialNumber;
+  final String? purchaseYear;
+  final String? condition;
+  final String? nextService;
+  final String? note;
+
+  factory SalesTeamReportMachineryModel.fromJson(Map<String, dynamic> json) {
+    return SalesTeamReportMachineryModel(
+      id: json['id'] as int?,
+      type: json['type']?.toString(),
+      brand: json['brand']?.toString(),
+      model: json['model']?.toString(),
+      serialNumber: json['serial_number']?.toString(),
+      purchaseYear: json['purchase_year']?.toString(),
+      condition: json['condition']?.toString(),
+      nextService: (json['next_service'] ?? json['next_nervice'])?.toString(),
+      note: json['note']?.toString(),
     );
   }
 }
