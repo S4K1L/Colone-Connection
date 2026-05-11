@@ -7,7 +7,6 @@ import 'package:flutter_extension/theme/light_theme.dart';
 import 'package:flutter_extension/util/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import 'controller/theme_controller.dart';
 import 'helper/get_di.dart' as di;
 import 'helper/route_helper.dart';

@@ -13,6 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
@@ -103,6 +104,29 @@ class _HomeScreenState extends State<HomeScreen> {
     await _mapController!.animateCamera(CameraUpdate.zoomTo(_currentZoom));
   }
 
+  Future<void> _goToUserLocation() async {
+    try {
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final Position position = await Geolocator.getCurrentPosition();
+      if (_mapController != null) {
+        _mapController!.animateCamera(
+          CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error getting user location: $e');
+    }
+  }
+
   void _fitMarkers(List<MapPointModel> points) {
     if (_mapController == null || points.isEmpty) return;
 
@@ -173,11 +197,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   zoom: 13.8,
                 ),
                 markers: Set<Marker>.of(home.markers),
-                myLocationEnabled: false,
+                myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
                 onMapCreated: (GoogleMapController c) {
                   _mapController = c;
+                  _goToUserLocation();
                   if (home.points.isNotEmpty) {
                     _fitMarkers(home.points);
                   }
@@ -385,37 +410,40 @@ class _HomeScreenState extends State<HomeScreen> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () async {
-                    Get.dialog(
-                      const Center(child: CircularProgressIndicator()),
-                      barrierDismissible: false,
-                    );
-                    await home.fetchColonyReportDetails(point.id);
-                    Get.back(); // close loading dialog
+                  onTap: point.id.startsWith('static_')
+                      ? null
+                      : () async {
+                          Get.dialog(
+                            const Center(child: CircularProgressIndicator()),
+                            barrierDismissible: false,
+                          );
+                          await home.fetchColonyReportDetails(point.id);
+                          Get.back(); // close loading dialog
 
-                    final details = home.colonyReportDetails;
-                    if (details == null) {
-                      Get.snackbar(
-                        'Details',
-                        home.colonyReportDetailsErrorMessage ??
-                            'Failed to load details.',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                      return;
-                    }
+                          final details = home.colonyReportDetails;
+                          if (details == null) {
+                            Get.snackbar(
+                              'Details',
+                              home.colonyReportDetailsErrorMessage ??
+                                  'Failed to load details.',
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                            return;
+                          }
 
-                    Get.toNamed(
-                      AppRoutes.colonyCustomers,
-                      arguments: ColonyCustomersArgs(
-                        colonyId: (details.colony?.id ?? point.id).toString(),
-                        reportId: (details.id ?? 0).toString(),
-                        colonyName: details.colony?.name ?? point.name,
-                        totalCustomers: point.customers,
-                        colonyArea: details.colony?.region ?? '',
-                        reportDetails: details,
-                      ),
-                    );
-                  },
+                          Get.toNamed(
+                            AppRoutes.colonyCustomers,
+                            arguments: ColonyCustomersArgs(
+                              colonyId:
+                                  (details.colony?.id ?? point.id).toString(),
+                              reportId: (details.id ?? 0).toString(),
+                              colonyName: details.colony?.name ?? point.name,
+                              totalCustomers: point.customers,
+                              colonyArea: details.colony?.region ?? '',
+                              reportDetails: details,
+                            ),
+                          );
+                        },
                   borderRadius: BorderRadius.circular(12.r),
                   child: Container(
                     width: double.infinity,
@@ -423,12 +451,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12.r),
-                      gradient: const LinearGradient(
-                        colors: <Color>[Color(0xFF408E1A), Color(0xFF17B85F)],
+                      gradient: LinearGradient(
+                        colors: point.id.startsWith('static_')
+                            ? <Color>[AppColors.grey300, AppColors.grey400]
+                            : <Color>[const Color(0xFF408E1A), const Color(0xFF17B85F)],
                       ),
                     ),
-                    child: const AppText.md(
-                      'View Details',
+                    child: AppText.md(
+                      point.id.startsWith('static_')
+                          ? 'No Report Available'
+                          : 'View Details',
                       fontSize: 12,
                       useResponsiveSize: true,
                       color: AppColors.white,

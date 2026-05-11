@@ -1,7 +1,7 @@
-// ignore_for_file: deprecated_member_use
-
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_extension/model/map_point_model.dart';
@@ -18,7 +18,7 @@ import 'package:get/get.dart';
 enum MapSearchFilterKind { all, colonies, customers }
 
 class HomeController extends GetxController {
-  static const LatLng center = LatLng(23.7806, 90.4056);
+  static const LatLng center = LatLng(45.16162015695993, -90.9388161954438);
   final TextEditingController searchController = TextEditingController();
 
   final List<MapPointModel> points = <MapPointModel>[];
@@ -175,7 +175,8 @@ class HomeController extends GetxController {
   }
 
   int get totalVisited => points.where((MapPointModel e) => e.isVisited).length;
-  int get todayColonies => points.length;
+  int get todayColonies =>
+      points.where((MapPointModel e) => !e.id.startsWith('static_')).length;
   int get totalCustomers =>
       points.fold<int>(0, (int total, MapPointModel e) => total + e.customers);
   int get totalVisits =>
@@ -186,6 +187,50 @@ class HomeController extends GetxController {
     super.onInit();
     searchController.addListener(_onSearchTextChanged);
     getSalesTeamReport();
+  }
+
+  Future<void> loadStaticLocations() async {
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/locations/locations.json');
+      final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
+
+      for (int i = 0; i < jsonList.length; i++) {
+        final dynamic item = jsonList[i];
+        if (item is! Map<String, dynamic>) continue;
+
+        final String name = item['name']?.toString() ?? '';
+        final double lat = _toDouble(item['latitude']);
+        final double lng = _toDouble(item['longitude']);
+
+        if (name.isEmpty) continue;
+
+        // Check if a point with this position already exists to avoid duplicates
+        // if they were already loaded by getSalesTeamReport
+        final bool exists = points.any(
+          (p) =>
+              (p.position.latitude - lat).abs() < 0.0001 &&
+              (p.position.longitude - lng).abs() < 0.0001,
+        );
+
+        if (!exists) {
+          points.add(
+            MapPointModel(
+              id: 'static_$i',
+              name: name,
+              region: 'Colony',
+              visits: 0,
+              customers: 0,
+              isVisited: false,
+              position: LatLng(lat, lng),
+            ),
+          );
+        }
+      }
+
+    } catch (e) {
+      debugPrint('Error loading static locations: $e');
+    }
   }
 
   Future<void> getSalesTeamReport() async {
@@ -250,7 +295,6 @@ class HomeController extends GetxController {
         );
       }
 
-      await buildCustomMarkers();
     } catch (e) {
       errorMessage = e.toString();
       showCustomSnackBar(
@@ -258,6 +302,8 @@ class HomeController extends GetxController {
         getXSnackBar: true,
       );
     } finally {
+      await loadStaticLocations();
+      await buildCustomMarkers();
       isLoading = false;
       update();
     }
@@ -304,11 +350,14 @@ class HomeController extends GetxController {
 
     final Set<Marker> generated = <Marker>{};
     for (final MapPointModel point in points) {
+      final bool isStatic = point.id.startsWith('static_');
       generated.add(
         Marker(
           markerId: MarkerId(point.id),
           position: point.position,
-          icon: point.isVisited ? _greenMarkerIcon! : _redMarkerIcon!,
+          icon: isStatic
+              ? BitmapDescriptor.defaultMarker
+              : (point.isVisited ? _greenMarkerIcon! : _redMarkerIcon!),
           onTap: () => onMarkerTap(point),
         ),
       );
