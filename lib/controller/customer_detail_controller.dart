@@ -150,7 +150,11 @@ class CustomerDetailController extends GetxController {
   void onInit() {
     super.onInit();
     _initContactControllers();
-    _seedDataFromReport();
+
+    if (args.reportDetails != null) {
+      _seedDataFromReport();
+    }
+    fetchReportDetails();
 
     if (args.shouldShowMachinery) {
       tabIndex = 2; // Machinery tab
@@ -160,6 +164,32 @@ class CustomerDetailController extends GetxController {
       addNoteExpanded = true;
     } else {
       addMachineryExpanded = machinery.isEmpty;
+    }
+  }
+
+  Future<void> fetchReportDetails() async {
+    final String cId = args.customerId;
+    if (cId == '0' || cId.isEmpty) return;
+
+    isLoading = true;
+    update();
+
+    try {
+      final response = await apiService.get(
+        "/sales_team/report/$cId",
+        authReq: true,
+      );
+      final raw = response.data;
+      final data = raw is Map<String, dynamic> ? raw['data'] : null;
+      if (data != null) {
+        final details = SalesTeamReportDetailsModel.fromJson(data);
+        _seedDataFromReport(details);
+      }
+    } catch (e) {
+      debugPrint('Error fetching report details: $e');
+    } finally {
+      isLoading = false;
+      update();
     }
   }
 
@@ -189,7 +219,6 @@ class CustomerDetailController extends GetxController {
   void _seedDataFromReport([SalesTeamReportDetailsModel? reportOverride]) {
     final report = reportOverride ?? args.reportDetails;
     if (report == null) {
-      _seedDummyData();
       return;
     }
 
@@ -215,6 +244,15 @@ class CustomerDetailController extends GetxController {
               id: n.id?.toString() ?? 'n_${DateTime.now().hashCode}',
               text: n.note ?? '',
               dateLabel: n.date ?? date,
+            ),
+          );
+
+          // Also add to visits as history
+          visits.add(
+            VisitHistoryEntry(
+              dateLabel: n.date ?? date,
+              summary: n.note ?? 'Note recorded',
+              status: 'Visited',
             ),
           );
         }
@@ -253,61 +291,18 @@ class CustomerDetailController extends GetxController {
       );
     }
 
-    visits.add(
-      VisitHistoryEntry(
-        dateLabel: date,
-        summary:
-            'Customer Status: ${customer?.status ?? "N/A"}',
-        status: (report.isVisited ?? false) ? 'Visited' : 'Not Visited',
-      ),
-    );
-  }
+    // Add current report visit to top if not already there from notes
+    if (visits.isEmpty) {
+      visits.add(
+        VisitHistoryEntry(
+          dateLabel: date,
+          summary: 'Current Report Status: ${customer?.status ?? "N/A"}',
+          status: (report.isVisited ?? false) ? 'Visited' : 'Pending',
+        ),
+      );
+    }
 
-
-  void _seedDummyData() {
-    notes.addAll([
-      CustomerNoteEntry(
-        id: 'n1',
-        text: 'Customer prefers morning visits.',
-        dateLabel: '02 Feb, 2025',
-      ),
-      CustomerNoteEntry(
-        id: 'n2',
-        text: 'Follow up on spare parts order.',
-        dateLabel: '15 Jan, 2025',
-      ),
-    ]);
-    visits.addAll([
-      const VisitHistoryEntry(
-        dateLabel: '5 March, 2026',
-        summary: 'Routine visit — stock check completed',
-        status: 'Visited',
-      ),
-      const VisitHistoryEntry(
-        dateLabel: '12 Feb, 2026',
-        summary: 'Follow-up on machinery order',
-        status: 'Visited',
-      ),
-      const VisitHistoryEntry(
-        dateLabel: '28 Jan, 2026',
-        summary: 'Missed appointment',
-        status: 'No show',
-      ),
-    ]);
-    machinery.addAll([
-      CustomerMachineryEntry(
-        id: 'mac1',
-        title: 'CNC Machine X200',
-        subtitle: 'Model X200-PRO · Serial SN-88921',
-        note: 'Running well.',
-      ),
-      CustomerMachineryEntry(
-        id: 'mac2',
-        title: 'CNC Machine X200',
-        subtitle: 'Model X200-PRO · Backup unit',
-        note: 'Scheduled for belt inspection.',
-      ),
-    ]);
+    // Sort visits by date if possible (though dateLabel is string, usually they come in order from API)
   }
 
   @override
@@ -381,24 +376,30 @@ class CustomerDetailController extends GetxController {
         ? _mNextIsoDate
         : m.isoNextService;
     try {
-      final response = await apiService.put('/sales_team/report/$rId', <String, dynamic>{
-        'mechineries': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'customer_id': int.tryParse(cId) ?? 0,
-            'type': m.type,
-            'brand': m.brand,
-            'model': m.model,
-            'serial_number': m.serial,
-            'purchase_year': purchaseYearIso,
-            'condition': m.condition,
-            'next_nervice': nextServiceIso,
-            'note': m.note,
-          },
-        ],
-      }, authReq: true);
+      final response = await apiService.put(
+        '/sales_team/report/$cId',
+        <String, dynamic>{
+          'mechineries': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'customer_id': int.tryParse(cId) ?? 0,
+              'type': m.type,
+              'brand': m.brand,
+              'model': m.model,
+              'serial_number': m.serial,
+              'purchase_year': purchaseYearIso,
+              'condition': m.condition,
+              'next_nervice': nextServiceIso,
+              'note': m.note,
+            },
+          ],
+        },
+        authReq: true,
+      );
 
       if (response.data != null && response.data['data'] != null) {
-        final newReport = SalesTeamReportDetailsModel.fromJson(response.data['data']);
+        final newReport = SalesTeamReportDetailsModel.fromJson(
+          response.data['data'],
+        );
         _seedDataFromReport(newReport);
       }
 
@@ -459,14 +460,23 @@ class CustomerDetailController extends GetxController {
     final String cId = args.customerId;
     if (rId != '0' && rId.isNotEmpty) {
       try {
-        final response = await apiService.put('/sales_team/report/$rId', <String, dynamic>{
-          'notes': <Map<String, dynamic>>[
-            <String, dynamic>{'customer_id': int.tryParse(cId) ?? 0, 'note': text},
-          ],
-        }, authReq: true);
+        final response = await apiService.put(
+          '/sales_team/report/$cId',
+          <String, dynamic>{
+            'notes': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'customer_id': int.tryParse(cId) ?? 0,
+                'note': text,
+              },
+            ],
+          },
+          authReq: true,
+        );
 
         if (response.data != null && response.data['data'] != null) {
-          final newReport = SalesTeamReportDetailsModel.fromJson(response.data['data']);
+          final newReport = SalesTeamReportDetailsModel.fromJson(
+            response.data['data'],
+          );
           _seedDataFromReport(newReport);
         }
 
@@ -608,7 +618,7 @@ class CustomerDetailController extends GetxController {
   Future<void> markVisited(String id) async {
     final String rId = args.reportId;
     if (rId == '0' || rId.isEmpty) return;
-    
+
     try {
       await apiService.put("/sales_team/report/$rId", {
         'is_visited': true,

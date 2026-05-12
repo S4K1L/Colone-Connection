@@ -23,7 +23,6 @@ class ColonyCustomerItem {
   final String phone;
   final ColonyCustomerStatus status;
   final String statusDateLabel;
-  /// e.g. "Add Machinery" or "Mark as Visited"
   final String primaryActionLabel;
   final String secondaryActionLabel;
 }

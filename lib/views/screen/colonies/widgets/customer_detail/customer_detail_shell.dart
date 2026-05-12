@@ -164,7 +164,7 @@ class CustomerDetailBottomBar extends StatelessWidget {
               iconSize: 20.w,
               label: 'Mark Visited',
               onTap: () => Get.find<CustomerDetailController>().markVisited(
-                args.reportDetails?.id.toString() ?? "",
+                args.customerId,
               ),
             ),
           ),

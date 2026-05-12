@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_extension/model/colony_customer_model.dart';
+import 'package:flutter_extension/model/sales_team_report_details_model.dart';
 import 'package:flutter_extension/helper/colony_flow_args.dart';
 import 'package:flutter_extension/helper/route_helper.dart';
 import 'package:flutter_extension/util/app_colors.dart';
@@ -14,6 +15,7 @@ class ColonyCustomerCard extends StatelessWidget {
     this.colonyName = '',
     this.colonyArea = '',
     this.reportId = '',
+    this.reportDetails,
     required this.onPrimaryAction,
     required this.onSecondaryAction,
   });
@@ -22,6 +24,7 @@ class ColonyCustomerCard extends StatelessWidget {
   final String colonyName;
   final String colonyArea;
   final String reportId;
+  final SalesTeamReportDetailsModel? reportDetails;
   final VoidCallback onPrimaryAction;
   final VoidCallback onSecondaryAction;
 
@@ -119,6 +122,7 @@ class ColonyCustomerCard extends StatelessWidget {
                     colonyArea: colonyArea,
                     customerId: item.id,
                     reportId: reportId,
+                    reportDetails: reportDetails,
                   ),
                 ),
                 behavior: HitTestBehavior.opaque,

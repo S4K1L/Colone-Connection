@@ -11,6 +11,7 @@ import 'package:get/get.dart' as g;
 import 'package:mime/mime.dart';
 
 import 'shared_prefs_service.dart';
+import 'package:flutter_extension/helper/route_helper.dart';
 
 class ApiService {
   ApiService._internal() {
@@ -68,36 +69,43 @@ class ApiService {
     _initializeRefreshClient();
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (RequestOptions options, RequestInterceptorHandler handler) async {
-          final bool authReq = options.extra['authReq'] == true;
-          if (authReq) {
-            final String? token = await SharedPrefsService.get(AppConstants.TOKEN);
-            if (token != null && token.isNotEmpty) {
-              options.headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
-            }
-          }
-          if (showAPICalls) {
-            _callCount++;
-            debugPrint('🆔 $_callCount');
-            debugPrint('➡️ [${options.method}] ${options.uri}');
-            debugPrint('📨 Headers: ${_pretty(options.headers)}');
-            if (options.queryParameters.isNotEmpty) {
-              debugPrint('🔎 Query: ${_pretty(options.queryParameters)}');
-            }
-            if (options.data != null) {
-              debugPrint('📤 Request Body: ${_pretty(options.data)}');
-            }
-          }
-          handler.next(options);
-        },
-        onResponse: (Response<dynamic> response, ResponseInterceptorHandler handler) {
-          if (showAPICalls) {
-            debugPrint('⬅️ [${response.requestOptions.method}] ${response.requestOptions.uri}');
-            debugPrint('✅ Status Code: ${response.statusCode}');
-            debugPrint('📦 Response Body: ${_pretty(response.data)}');
-          }
-          handler.next(response);
-        },
+        onRequest:
+            (RequestOptions options, RequestInterceptorHandler handler) async {
+              final bool authReq = options.extra['authReq'] == true;
+              if (authReq) {
+                final String? token = await SharedPrefsService.get(
+                  AppConstants.TOKEN,
+                );
+                if (token != null && token.isNotEmpty) {
+                  options.headers[HttpHeaders.authorizationHeader] =
+                      'Bearer $token';
+                }
+              }
+              if (showAPICalls) {
+                _callCount++;
+                debugPrint('🆔 $_callCount');
+                debugPrint('➡️ [${options.method}] ${options.uri}');
+                debugPrint('📨 Headers: ${_pretty(options.headers)}');
+                if (options.queryParameters.isNotEmpty) {
+                  debugPrint('🔎 Query: ${_pretty(options.queryParameters)}');
+                }
+                if (options.data != null) {
+                  debugPrint('📤 Request Body: ${_pretty(options.data)}');
+                }
+              }
+              handler.next(options);
+            },
+        onResponse:
+            (Response<dynamic> response, ResponseInterceptorHandler handler) {
+              if (showAPICalls) {
+                debugPrint(
+                  '⬅️ [${response.requestOptions.method}] ${response.requestOptions.uri}',
+                );
+                debugPrint('✅ Status Code: ${response.statusCode}');
+                debugPrint('📦 Response Body: ${_pretty(response.data)}');
+              }
+              handler.next(response);
+            },
         onError: (DioException error, ErrorInterceptorHandler handler) async {
           final RequestOptions req = error.requestOptions;
           final int? statusCode = error.response?.statusCode;
@@ -110,9 +118,12 @@ class ApiService {
 
           final bool authReq = req.extra['authReq'] == true;
           if (authReq && statusCode == 401) {
-            final bool hasRetried = req.extra[_hasRetriedAfterRefreshExtraKey] == true;
+            final bool hasRetried =
+                req.extra[_hasRetriedAfterRefreshExtraKey] == true;
             if (!hasRetried) {
-              final Response<dynamic>? retried = await _retryAfterTokenRefresh(req);
+              final Response<dynamic>? retried = await _retryAfterTokenRefresh(
+                req,
+              );
               if (retried != null) {
                 handler.resolve(retried);
                 return;
@@ -122,8 +133,10 @@ class ApiService {
           }
 
           if (_shouldRetryError(error) && _canRetry(req)) {
-            final Response<dynamic>? retried =
-                await _retryRequest(req, retryReason: error.type.name);
+            final Response<dynamic>? retried = await _retryRequest(
+              req,
+              retryReason: error.type.name,
+            );
             if (retried != null) {
               handler.resolve(retried);
               return;
@@ -165,7 +178,8 @@ class ApiService {
   }
 
   bool _canRetry(RequestOptions requestOptions) {
-    final int retryCount = (requestOptions.extra[_retryCountExtraKey] as int?) ?? 0;
+    final int retryCount =
+        (requestOptions.extra[_retryCountExtraKey] as int?) ?? 0;
     return retryCount < _maxRetryCount;
   }
 
@@ -175,7 +189,8 @@ class ApiService {
   }) async {
     if (!_canRetry(requestOptions)) return null;
 
-    final int retryCount = (requestOptions.extra[_retryCountExtraKey] as int?) ?? 0;
+    final int retryCount =
+        (requestOptions.extra[_retryCountExtraKey] as int?) ?? 0;
     final int nextRetryCount = retryCount + 1;
 
     await Future<void>.delayed(Duration(milliseconds: 300 * nextRetryCount));
@@ -197,7 +212,9 @@ class ApiService {
     );
 
     if (showAPICalls) {
-      debugPrint('🔁 Retrying (${nextRetryCount}/$_maxRetryCount) because $retryReason');
+      debugPrint(
+        '🔁 Retrying (${nextRetryCount}/$_maxRetryCount) because $retryReason',
+      );
     }
 
     try {
@@ -212,13 +229,17 @@ class ApiService {
     }
   }
 
-  Future<Response<dynamic>?> _retryAfterTokenRefresh(RequestOptions requestOptions) async {
+  Future<Response<dynamic>?> _retryAfterTokenRefresh(
+    RequestOptions requestOptions,
+  ) async {
     final String? freshAccessToken = await _refreshAccessToken();
     if (freshAccessToken == null || freshAccessToken.isEmpty) {
       return null;
     }
 
-    final Map<String, dynamic> headers = Map<String, dynamic>.from(requestOptions.headers);
+    final Map<String, dynamic> headers = Map<String, dynamic>.from(
+      requestOptions.headers,
+    );
     headers[HttpHeaders.authorizationHeader] = 'Bearer $freshAccessToken';
 
     final Options retryOptions = Options(
@@ -257,7 +278,9 @@ class ApiService {
 
     _refreshFuture = () async {
       try {
-        final String? refreshToken = await SharedPrefsService.get(_refreshTokenKey);
+        final String? refreshToken = await SharedPrefsService.get(
+          _refreshTokenKey,
+        );
         if (refreshToken == null || refreshToken.isEmpty) return null;
 
         final Response<dynamic> response = await _refreshDio.post<dynamic>(
@@ -265,7 +288,8 @@ class ApiService {
           data: <String, dynamic>{'refreshToken': refreshToken},
         );
 
-        if ((response.statusCode ?? 0) < 200 || (response.statusCode ?? 0) >= 300) {
+        if ((response.statusCode ?? 0) < 200 ||
+            (response.statusCode ?? 0) >= 300) {
           return null;
         }
 
@@ -273,8 +297,11 @@ class ApiService {
         String? accessToken;
         String? nextRefreshToken;
         if (data is Map) {
-          accessToken = (data['accessToken'] ?? data['token'] ?? data['access_token']) as String?;
-          nextRefreshToken = (data['refreshToken'] ?? data['refresh_token']) as String?;
+          accessToken =
+              (data['accessToken'] ?? data['token'] ?? data['access_token'])
+                  as String?;
+          nextRefreshToken =
+              (data['refreshToken'] ?? data['refresh_token']) as String?;
         }
 
         if (accessToken == null || accessToken.isEmpty) return null;
@@ -521,9 +548,13 @@ class ApiService {
           ),
         );
       } else if (value is List || value is Map) {
-        formData.fields.add(MapEntry<String, String>(entry.key, jsonEncode(value)));
+        formData.fields.add(
+          MapEntry<String, String>(entry.key, jsonEncode(value)),
+        );
       } else {
-        formData.fields.add(MapEntry<String, String>(entry.key, value.toString()));
+        formData.fields.add(
+          MapEntry<String, String>(entry.key, value.toString()),
+        );
       }
     }
     return formData;
@@ -604,9 +635,22 @@ class ApiService {
     }
   }
 
-  void _checkTokenExpiry(bool authReq, Response<dynamic>? response) {
+  void _checkTokenExpiry(bool authReq, Response<dynamic>? response) async {
     if (!authReq || response?.statusCode != 401) return;
-    debugPrint('⚠️ Session expired (401).');
+    debugPrint('⚠️ Session expired (401). Performing logout.');
+
+    // Clear session data
+    await SharedPrefsService.remove(AppConstants.TOKEN);
+
+    // Redirect to login screen
+    g.Get.offAllNamed(AppRoutes.loginScreen);
+
+    // Show notification
+    showCustomSnackBar(
+      'Session expired. Please log in again.',
+      isError: true,
+      getXSnackBar: true,
+    );
   }
 }
 
@@ -631,11 +675,12 @@ class ApiException implements Exception {
 
     if (responseData is Map) {
       code = responseData['code']?.toString();
-      message = (responseData['message'] ??
-              responseData['error'] ??
-              responseData['detail'] ??
-              message)
-          .toString();
+      message =
+          (responseData['message'] ??
+                  responseData['error'] ??
+                  responseData['detail'] ??
+                  message)
+              .toString();
     } else if (responseData is String && responseData.isNotEmpty) {
       message = responseData;
     } else {
@@ -669,5 +714,6 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'ApiException(statusCode: $statusCode, message: $message, code: $code)';
+  String toString() =>
+      'ApiException(statusCode: $statusCode, message: $message, code: $code)';
 }

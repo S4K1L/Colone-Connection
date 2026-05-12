@@ -132,6 +132,7 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
                                             colonyName: c.args.colonyName,
                                             colonyArea: c.args.colonyArea,
                                             reportId: c.args.reportId,
+                                            reportDetails: c.args.reportDetails,
                                             onPrimaryAction: () {
                                               if (item.status ==
                                                   ColonyCustomerStatus
@@ -154,6 +155,8 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
                                                     shouldShowMachinery: true,
                                                     customerId: item.id,
                                                     reportId: c.args.reportId,
+                                                    reportDetails:
+                                                        c.args.reportDetails,
                                                   ),
                                                 );
                                               } else {
@@ -182,6 +185,8 @@ class _ColonyDetailsScreenState extends State<ColonyDetailsScreen> {
                                                   shouldShowNotes: true,
                                                   customerId: item.id,
                                                   reportId: c.args.reportId,
+                                                  reportDetails:
+                                                      c.args.reportDetails,
                                                 ),
                                               );
                                             },

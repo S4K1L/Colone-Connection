@@ -51,10 +51,19 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           children: <Widget>[
             GetBuilder<CustomerDetailController>(
               builder: (CustomerDetailController c) {
-                return CustomerDetailAppBar(
-                  args: c.args,
-                  tabIndex: c.tabIndex,
-                  onTab: c.setTab,
+                return Column(
+                  children: [
+                    CustomerDetailAppBar(
+                      args: c.args,
+                      tabIndex: c.tabIndex,
+                      onTab: c.setTab,
+                    ),
+                    if (c.isLoading)
+                      const LinearProgressIndicator(
+                        color: AppColors.green500,
+                        backgroundColor: Colors.transparent,
+                      ),
+                  ],
                 );
               },
             ),
